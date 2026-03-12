@@ -298,11 +298,11 @@
           <div class="grid">
             <div class="field">
               <label for="seasonStartDate">Season Start Date</label>
-              <input id="seasonStartDate" class="date-input" type="text" inputmode="numeric" placeholder="mm/dd/yyyy" required>
+              <input id="seasonStartDate" class="date-input" type="date" required>
             </div>
             <div class="field">
               <label for="seasonEndDate">Season End Date</label>
-              <input id="seasonEndDate" class="date-input" type="text" inputmode="numeric" placeholder="mm/dd/yyyy" required>
+              <input id="seasonEndDate" class="date-input" type="date" required>
             </div>
           </div>
         </fieldset>
@@ -351,7 +351,7 @@
       </div>
       <div class="field">
         <label>Event Date</label>
-        <input class="event-date date-input" type="text" inputmode="numeric" placeholder="mm/dd/yyyy" required>
+        <input class="event-date date-input" type="date" required>
       </div>
       <button class="btn remove" type="button">X</button>
     </div>
@@ -496,13 +496,8 @@
 
     function initializeDateInput(input) {
       input.addEventListener('focus', () => {
-        if (input.type !== 'date') {
-          input.type = 'date';
-        }
-      });
-      input.addEventListener('blur', () => {
-        if (!input.value) {
-          input.type = 'text';
+        if (typeof input.showPicker === 'function') {
+          input.showPicker();
         }
       });
     }
@@ -514,22 +509,14 @@
     dashboardButton.addEventListener('click', openDashboard);
     form.addEventListener('submit', (event) => event.preventDefault());
     document.querySelectorAll('.date-input').forEach(initializeDateInput);
-    document.addEventListener('pointerdown', (event) => {
+    document.addEventListener('click', (event) => {
       const input = event.target.closest('.date-input');
       if (!input) {
         return;
       }
-      event.preventDefault();
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      window.setTimeout(() => {
-        if (input.type !== 'date') {
-          input.type = 'date';
-        }
-        input.focus({ preventScroll: true });
-        if (typeof input.showPicker === 'function') {
-          input.showPicker();
-        }
-      }, 120);
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      }
     });
 
     addEventRow('main');

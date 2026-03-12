@@ -405,7 +405,7 @@
       border: 1px solid var(--line-2);
       background: #08121c;
       color: var(--text);
-      min-height: 56px;
+      min-height: 72px;
       padding: 4px 4px 5px;
       cursor: pointer;
       display: grid;
@@ -480,6 +480,12 @@
     .view-panel {
       display: grid;
       grid-template-rows: auto auto 1fr;
+      min-height: 0;
+    }
+
+    .view-scroll {
+      max-height: calc(100vh - 330px);
+      overflow: auto;
       min-height: 0;
     }
 
@@ -662,6 +668,11 @@
 
     .detail-card.clickable:hover {
       background: #0b1722;
+    }
+
+    .flash-target {
+      box-shadow: 0 0 0 2px var(--cyan), inset 0 0 0 1px var(--cyan);
+      transition: box-shadow 0.2s ease;
     }
 
     .detail-head {
@@ -1195,6 +1206,7 @@
     const weekNav = document.getElementById('week-nav');
     const viewCopy = document.getElementById('view-copy');
     const viewContent = document.getElementById('view-content');
+    const viewScroll = document.querySelector('.view-scroll');
     const exportBtn = document.getElementById('export-btn');
     const yearViewBtn = document.getElementById('year-view-btn');
     const monthlyViewBtn = document.getElementById('monthly-view-btn');
@@ -1400,6 +1412,23 @@
       localStorage.setItem(storageKey, JSON.stringify(payload));
     }
 
+    function flashWeekInActiveView(weekNumber) {
+      window.setTimeout(() => {
+        const targets = Array.from(viewContent.querySelectorAll(`[data-week="${weekNumber}"]`));
+        if (!targets.length) {
+          return;
+        }
+        const scrollTarget = currentView === 'month'
+          ? viewContent.querySelector(`.detail-card[data-week="${weekNumber}"]`) || targets[0]
+          : targets[0];
+        scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        targets.forEach((target) => target.classList.add('flash-target'));
+        window.setTimeout(() => {
+          targets.forEach((target) => target.classList.remove('flash-target'));
+        }, 1100);
+      }, 40);
+    }
+
     function setModalEditing(editing) {
       modalEditing = editing;
       const modalCard = weekModal.querySelector('.modal-card');
@@ -1494,6 +1523,7 @@
           selectedWeek = week.week;
           selectedMonthKey = week.monthKey;
           renderDashboard();
+          flashWeekInActiveView(week.week);
           openWeekModal(week.week);
         });
         weekRailBody.appendChild(row);
@@ -1556,6 +1586,7 @@
           selectedWeek = week.week;
           selectedMonthKey = week.monthKey;
           renderDashboard();
+          flashWeekInActiveView(week.week);
           openWeekModal(week.week);
         });
         seasonStrip.appendChild(button);
@@ -1889,6 +1920,15 @@
         closeWeekModal();
       }
     });
+    viewScroll.addEventListener('wheel', (event) => {
+      const canScrollHorizontally = viewScroll.scrollWidth > viewScroll.clientWidth;
+      const canScrollVertically = viewScroll.scrollHeight > viewScroll.clientHeight;
+      if (!canScrollHorizontally || canScrollVertically || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        return;
+      }
+      event.preventDefault();
+      viewScroll.scrollLeft += event.deltaY;
+    }, { passive: false });
     viewContent.addEventListener('click', (event) => {
       const trigger = event.target.closest('[data-week]');
       if (!trigger) {
