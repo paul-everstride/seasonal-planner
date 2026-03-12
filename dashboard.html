@@ -603,6 +603,15 @@
       min-width: 120px;
     }
 
+    .matrix td.long-text {
+      min-width: 104px;
+      max-width: 104px;
+      white-space: pre-line;
+      line-height: 1.28;
+      color: var(--text);
+      word-break: break-word;
+    }
+
     .metric-inline {
       display: flex;
       gap: 3px;
@@ -767,12 +776,16 @@
     }
 
     .modal-card {
-      width: min(1380px, 100%);
+      width: min(760px, 100%);
       max-height: calc(100vh - 24px);
       overflow: auto;
       border: 1px solid var(--line);
       background: var(--bg-2);
       box-shadow: var(--shadow);
+    }
+
+    .modal-card.editing {
+      width: min(1380px, 100%);
     }
 
     .modal-head {
@@ -795,10 +808,14 @@
     }
 
     .modal-layout {
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
+      display: block;
       gap: 8px;
       padding: 8px;
+    }
+
+    .modal-layout.editing {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
     }
 
     .editor-panel {
@@ -806,6 +823,10 @@
       background: #08121c;
       padding: 8px;
       min-width: 0;
+    }
+
+    .editor-panel.hidden {
+      display: none;
     }
 
     .editor-grid {
@@ -1070,15 +1091,16 @@
       <div class="modal-head">
         <h2 id="modal-title">Week Detail</h2>
         <div class="toolbar">
+          <button class="btn" id="start-edit-btn" type="button">Edit This Week</button>
           <button class="btn" id="reset-week-btn" type="button">Reset Week</button>
           <button class="btn" id="close-modal-btn" type="button">Close</button>
         </div>
       </div>
-      <div class="modal-layout">
+      <div class="modal-layout" id="modal-layout">
         <section class="editor-panel">
           <div id="modal-preview"></div>
         </section>
-        <section class="editor-panel">
+        <section class="editor-panel hidden" id="edit-panel">
           <form id="week-edit-form">
             <div class="editor-grid">
               <div class="field">
@@ -1183,11 +1205,14 @@
     const summarySelected = document.getElementById('summary-selected');
     const summaryTests = document.getElementById('summary-tests');
     const weekModal = document.getElementById('week-modal');
+    const modalLayout = document.getElementById('modal-layout');
+    const editPanel = document.getElementById('edit-panel');
     const modalTitle = document.getElementById('modal-title');
     const modalPreview = document.getElementById('modal-preview');
     const weekEditForm = document.getElementById('week-edit-form');
     const editorMeta = document.getElementById('editor-meta');
     const openEditorBtn = document.getElementById('open-editor-btn');
+    const startEditBtn = document.getElementById('start-edit-btn');
 
     let payload = null;
     let context = null;
@@ -1195,6 +1220,7 @@
     let selectedMonthKey = null;
     let selectedWeek = null;
     let editingWeek = null;
+    let modalEditing = false;
     let weekOverrides = {};
     const phaseColors = {
       'Prep': '92D050',
@@ -1374,6 +1400,19 @@
       localStorage.setItem(storageKey, JSON.stringify(payload));
     }
 
+    function setModalEditing(editing) {
+      modalEditing = editing;
+      const modalCard = weekModal.querySelector('.modal-card');
+      modalCard.classList.toggle('editing', editing);
+      modalLayout.classList.toggle('editing', editing);
+      editPanel.classList.toggle('hidden', !editing);
+      startEditBtn.classList.toggle('hidden', editing);
+      document.getElementById('reset-week-btn').classList.toggle('hidden', !editing);
+      if (editingWeek) {
+        modalTitle.textContent = editing ? `Week ${editingWeek} Detail And Editor` : `Week ${editingWeek} Detail`;
+      }
+    }
+
     async function fetchContext() {
       const response = await fetch('/preview', {
         method: 'POST',
@@ -1427,9 +1466,9 @@
         chip.addEventListener('click', () => {
           selectedWeek = block.startWeek;
           selectedMonthKey = weekByNumber(selectedWeek).monthKey;
-          currentView = 'week';
           syncButtons();
           renderDashboard();
+          openWeekModal(block.startWeek);
         });
         macroRow.appendChild(chip);
       });
@@ -1583,6 +1622,14 @@
               <th class="row-label">Events</th>
               ${weeks.map((week) => `<td class="clickable race-cell" data-week="${week.week}">${eventsSummaryMarkup(week)}</td>`).join('')}
             </tr>
+            <tr>
+              <th class="row-label">Focus</th>
+              ${weeks.map((week) => `<td class="clickable long-text" data-week="${week.week}">${escapeHtml(week.focusText)}</td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Goal</th>
+              ${weeks.map((week) => `<td class="clickable long-text" data-week="${week.week}">${escapeHtml(week.goalText)}</td>`).join('')}
+            </tr>
           </tbody>
         </table>
       `;
@@ -1663,6 +1710,7 @@
       weekModal.classList.add('hidden');
       weekModal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('modal-open');
+      setModalEditing(false);
       editingWeek = null;
     }
 
@@ -1672,7 +1720,7 @@
         return;
       }
       editingWeek = weekNumber;
-      modalTitle.textContent = `Week ${week.week} Detail And Editor`;
+      setModalEditing(false);
       modalPreview.innerHTML = detailCardMarkup(week, false);
       document.getElementById('edit-phase').value = week.phase;
       populateMicroOptions(week.phase, week.microType);
@@ -1808,6 +1856,12 @@
     openEditorBtn.addEventListener('click', () => {
       if (selectedWeek) {
         openWeekModal(selectedWeek);
+        setModalEditing(true);
+      }
+    });
+    startEditBtn.addEventListener('click', () => {
+      if (editingWeek) {
+        setModalEditing(true);
       }
     });
     document.getElementById('edit-phase').addEventListener('change', (event) => {
