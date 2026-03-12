@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Season Plan Dashboard</title>
+  <style>
+    :root {
+      --bg: #060b12;
+      --bg-2: #0b1119;
+      --bg-3: #0f1722;
+      --bg-4: #121c29;
+      --line: #1e2835;
+      --line-2: #263243;
+      --text: #d7e2f0;
+      --muted: #7f8b9a;
+      --accent: #e8400c;
+      --good: #17c964;
+      --warn: #f5a524;
+      --danger: #f31260;
+      --cyan: #46d8f7;
+      --shadow: 0 10px 26px rgba(0, 0, 0, 0.26);
+      --mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .page {
+      max-width: 1920px;
+      margin: 0 auto;
+      padding: 8px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      padding: 8px 10px 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #060b12 0%, #081019 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar h1 {
+      margin: 0 0 4px;
+      font-size: 1.55rem;
+      line-height: 1;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+
+    .topbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+      font-family: var(--mono);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line-2);
+      background: var(--bg-3);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 0;
+      cursor: pointer;
+      font-size: 0.74rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .btn:hover {
+      border-color: var(--cyan);
+    }
+
+    .btn.primary {
+      color: #071018;
+      background: var(--good);
+      border-color: var(--good);
+    }
+
+    .btn.tab.active,
+    .btn.subtab.active {
+      background: #0d1d2c;
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .summary-card {
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      padding: 7px 9px;
+      min-height: 60px;
+    }
+
+    .summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 0.98rem;
+      color: var(--text);
+      line-height: 1.15;
+    }
+
+    .summary-card .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      line-height: 1.25;
+      white-space: pre-line;
+    }
+
+    .workspace {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #09101a;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: var(--mono);
+      color: #c8d4e4;
+    }
+
+    .panel-note {
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .rail {
+      width: 430px;
+      min-width: 320px;
+      max-width: 640px;
+      flex: 0 0 auto;
+      resize: horizontal;
+      overflow: auto;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      min-height: calc(100vh - 172px);
+    }
+
+    .macro-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--line);
+      background: #070d15;
+    }
+
+    .macro-chip {
+      border: 1px solid var(--line-2);
+      background: #0d1520;
+      color: var(--text);
+      padding: 3px 6px;
+      font-size: 0.6rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .macro-chip:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .rail-pinned {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--line);
+      background: #08111a;
+      color: var(--muted);
+      font-size: 0.64rem;
+      font-family: var(--mono);
+      line-height: 1.35;
+      white-space: pre-line;
+    }
+
+    .rail-table-wrap,
+    .view-scroll,
+    .strip-wrap,
+    .timeline-wrap {
+      overflow: auto;
+    }
+
+    .rail-table-wrap {
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .rail-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+    }
+
+    .rail-table th,
+    .rail-table td {
+      border-bottom: 1px solid #111a24;
+      padding: 5px 6px;
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: top;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rail-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #0a121c;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .rail-row {
+      cursor: pointer;
+    }
+
+    .rail-row:hover {
+      background: #0b1520;
+    }
+
+    .rail-row.active {
+      background: rgba(70, 216, 247, 0.12);
+      box-shadow: inset 2px 0 0 var(--cyan);
+    }
+
+    .rail-row.race-week {
+      background: rgba(243, 18, 96, 0.08);
+    }
+
+    .rail-row.secondary-week {
+      background: rgba(23, 201, 100, 0.08);
+    }
+
+    .phase-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    .main {
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .overview-panel {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .overview-copy {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .timeline-wrap {
+      padding: 8px 8px 0;
+    }
+
+    .macro-timeline,
+    .overview-dates,
+    .season-strip {
+      display: grid;
+      gap: 4px;
+      min-width: 1320px;
+    }
+
+    .macro-timeline {
+      margin-bottom: 6px;
+    }
+
+    .overview-dates {
+      margin-bottom: 6px;
+    }
+
+    .date-cell {
+      min-height: 24px;
+      border: 1px solid var(--line-2);
+      background: #09121b;
+      color: var(--text);
+      padding: 4px 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+    }
+
+    .macro-band {
+      min-height: 36px;
+      border: 1px solid var(--line-2);
+      background: #0a141f;
+      color: var(--text);
+      padding: 5px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      font-family: var(--mono);
+    }
+
+    .macro-band strong {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .macro-band span {
+      color: var(--muted);
+      font-size: 0.56rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .strip-cell {
+      border: 1px solid var(--line-2);
+      background: #08121c;
+      color: var(--text);
+      min-height: 56px;
+      padding: 4px 4px 5px;
+      cursor: pointer;
+      display: grid;
+      grid-template-rows: auto auto auto auto;
+      gap: 2px;
+      box-shadow: inset 0 3px 0 var(--accent-color, #666);
+    }
+
+    .strip-cell:hover {
+      background: #0b1722;
+    }
+
+    .strip-cell.active {
+      border-color: var(--cyan);
+      box-shadow: inset 0 3px 0 var(--accent-color, #666), 0 0 0 1px var(--cyan);
+    }
+
+    .strip-line {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      line-height: 1.06;
+      color: var(--text);
+    }
+
+    .strip-line.strong {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .strip-flags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .flag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 4px;
+      border-radius: 999px;
+      font-size: 0.55rem;
+      font-weight: 700;
+      border: 1px solid currentColor;
+      line-height: 1.15;
+      text-transform: uppercase;
+    }
+
+    .flag.ftp,
+    .flag.four-d {
+      color: var(--warn);
+    }
+
+    .flag.camp {
+      color: var(--cyan);
+    }
+
+    .flag.race {
+      color: var(--danger);
+    }
+
+    .flag.main {
+      color: var(--good);
+    }
+
+    .flag.secondary {
+      color: var(--good);
+    }
+
+    .view-panel {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 0;
+    }
+
+    .controls {
+      display: grid;
+      gap: 6px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #09111a;
+    }
+
+    .controls-top,
+    .controls-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .tabs,
+    .week-nav,
+    .month-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .month-pill {
+      border: 1px solid var(--line-2);
+      background: #0d1520;
+      color: var(--muted);
+      padding: 5px 8px;
+      cursor: pointer;
+      font-size: 0.64rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .month-pill.active {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: rgba(70, 216, 247, 0.08);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .view-copy {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .matrix {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.66rem;
+    }
+
+    .matrix th,
+    .matrix td {
+      border-right: 1px solid #111a24;
+      border-bottom: 1px solid #111a24;
+      padding: 4px 5px;
+      vertical-align: top;
+      text-align: left;
+      min-width: 82px;
+    }
+
+    .matrix thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #0a121c;
+      color: var(--muted);
+    }
+
+    .matrix .row-label {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #0a121c;
+      color: #b9c7d7;
+      text-transform: uppercase;
+      min-width: 110px;
+      font-weight: 700;
+    }
+
+    .matrix .sticky-corner {
+      z-index: 3;
+    }
+
+    .matrix td.clickable,
+    .matrix th.clickable {
+      cursor: pointer;
+    }
+
+    .matrix td.clickable:hover,
+    .matrix th.clickable:hover {
+      background: #0b1520;
+    }
+
+    .matrix td.phase-cell,
+    .matrix td.micro-cell,
+    .matrix td.week-range-cell {
+      box-shadow: inset 0 3px 0 var(--phase-color, #666);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .matrix td.race-cell {
+      min-width: 120px;
+    }
+
+    .metric-inline {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .metric-box {
+      width: 11px;
+      height: 11px;
+      border: 1px solid #364253;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.52rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .metric-box.filled {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .detail-grid {
+      display: grid;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .detail-grid.monthly {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .detail-card,
+    .week-section {
+      border: 1px solid var(--line-2);
+      background: #08121c;
+      color: var(--text);
+      box-shadow: inset 0 3px 0 var(--accent-color, #666);
+      padding: 8px;
+      min-width: 0;
+    }
+
+    .detail-card.clickable {
+      cursor: pointer;
+    }
+
+    .detail-card.clickable:hover {
+      background: #0b1722;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .detail-main {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .detail-meta,
+    .detail-date {
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-family: var(--mono);
+      line-height: 1.3;
+      text-transform: uppercase;
+      white-space: pre-line;
+    }
+
+    .detail-date {
+      text-align: right;
+    }
+
+    .phase-tag {
+      display: inline-block;
+      padding: 3px 6px;
+      font-size: 0.6rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      margin-bottom: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .dense-table {
+      display: grid;
+      gap: 3px;
+      font-size: 0.68rem;
+      font-family: var(--mono);
+    }
+
+    .dense-row {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 6px;
+      align-items: start;
+    }
+
+    .dense-row strong {
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .block {
+      margin-top: 8px;
+      border-top: 1px solid #13202d;
+      padding-top: 6px;
+    }
+
+    .block strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .block p {
+      margin: 0;
+      color: var(--text);
+      font-size: 0.72rem;
+      line-height: 1.32;
+      white-space: pre-line;
+    }
+
+    .editor-launch {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    .empty {
+      padding: 20px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 12, 0.78);
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      z-index: 1000;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      width: min(1380px, 100%);
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #09111a;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--mono);
+      color: #c8d4e4;
+    }
+
+    .modal-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .editor-panel {
+      border: 1px solid var(--line-2);
+      background: #08121c;
+      padding: 8px;
+      min-width: 0;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.64rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line-2);
+      background: var(--bg-3);
+      color: var(--text);
+      padding: 7px 8px;
+      border-radius: 0;
+      font-size: 0.76rem;
+      font-family: var(--mono);
+    }
+
+    .field textarea {
+      min-height: 112px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: inset 0 0 0 1px var(--cyan);
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .check-box {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      border: 1px solid var(--line-2);
+      background: var(--bg-3);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .check-box input {
+      width: auto;
+      margin: 0;
+    }
+
+    .editor-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .meta-stack {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1480px) {
+      .workspace {
+        grid-template-columns: 320px minmax(0, 1fr);
+      }
+
+      .detail-grid.monthly {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 1180px) {
+      .workspace,
+      .modal-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .rail {
+        width: 100%;
+        max-width: none;
+        resize: none;
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .summary-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .detail-grid.monthly,
+      .editor-grid,
+      .check-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .summary-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .macro-timeline,
+      .season-strip {
+        min-width: 900px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1>Season Plan Dashboard</h1>
+        <p id="subtitle">Loading race-driven dashboard.</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="back-btn" type="button">Back To Form</button>
+        <button class="btn primary" id="export-btn" type="button">Excel Generate</button>
+      </div>
+    </div>
+
+    <div class="summary-strip">
+      <div class="summary-card">
+        <span>Total Weeks</span>
+        <strong id="summary-weeks">0</strong>
+        <div class="sub">Complete season range</div>
+      </div>
+      <div class="summary-card">
+        <span>Race Weeks</span>
+        <strong id="summary-races">0</strong>
+        <div class="sub">All scheduled race blocks</div>
+      </div>
+      <div class="summary-card">
+        <span>Main Races</span>
+        <strong id="summary-main">-</strong>
+        <div class="sub">Schedule-driving races</div>
+      </div>
+      <div class="summary-card">
+        <span>Visible Range</span>
+        <strong id="summary-range">-</strong>
+        <div class="sub">Current view scope</div>
+      </div>
+      <div class="summary-card">
+        <span>Selected Week</span>
+        <strong id="summary-selected">-</strong>
+        <div class="sub">Focused detail card</div>
+      </div>
+      <div class="summary-card">
+        <span>Tests</span>
+        <strong id="summary-tests">-</strong>
+        <div class="sub">FTP and 4D checkpoints</div>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <aside class="panel rail">
+        <div class="panel-head">
+          <h2 class="panel-title">Week Rail</h2>
+        </div>
+        <div class="macro-row" id="macro-row"></div>
+        <div class="rail-pinned" id="rail-pinned">Macro block: -</div>
+        <div class="rail-table-wrap">
+          <table class="rail-table">
+            <thead>
+              <tr>
+                <th>Wk</th>
+                <th>Date</th>
+                <th>Macro</th>
+                <th>Phase</th>
+                <th>Micro</th>
+                <th>Tests</th>
+                <th>Events</th>
+                <th>V/I</th>
+              </tr>
+            </thead>
+            <tbody id="week-rail-body"></tbody>
+          </table>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="panel overview-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Season Overview</h2>
+          </div>
+          <div class="overview-copy"></div>
+          <div class="timeline-wrap">
+            <div class="macro-timeline" id="macro-timeline"></div>
+            <div class="overview-dates" id="overview-dates"></div>
+            <div class="season-strip" id="season-strip"></div>
+          </div>
+        </section>
+
+        <section class="panel view-panel">
+          <div class="controls">
+            <div class="controls-top">
+              <div class="tabs">
+                <button class="btn tab active" id="year-view-btn" type="button">Year</button>
+                <button class="btn tab" id="monthly-view-btn" type="button">Month</button>
+              </div>
+              <div class="week-nav" id="week-nav">
+                <button class="btn subtab" id="open-editor-btn" type="button">Edit Selected Week</button>
+              </div>
+            </div>
+            <div class="controls-bottom">
+              <div class="month-pills hidden" id="month-pills"></div>
+            </div>
+          </div>
+          <div class="view-copy" id="view-copy">Condensed annual matrix. Use Month or Week for expanded detail.</div>
+          <div class="view-scroll" id="view-content"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="week-modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modal-title">Week Detail</h2>
+        <div class="toolbar">
+          <button class="btn" id="reset-week-btn" type="button">Reset Week</button>
+          <button class="btn" id="close-modal-btn" type="button">Close</button>
+        </div>
+      </div>
+      <div class="modal-layout">
+        <section class="editor-panel">
+          <div id="modal-preview"></div>
+        </section>
+        <section class="editor-panel">
+          <form id="week-edit-form">
+            <div class="editor-grid">
+              <div class="field">
+                <label for="edit-micro">Micro Cycle</label>
+                <select id="edit-micro" name="microType">
+                  <option value="General">General</option>
+                  <option value="Build">Build</option>
+                  <option value="Peak">Peak</option>
+                  <option value="Taper">Taper</option>
+                  <option value="Race">Race</option>
+                  <option value="Recovery">Recovery</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="edit-phase">Phase</label>
+                <select id="edit-phase" name="phase">
+                  <option value="Prep">Prep</option>
+                  <option value="Base 1">Base 1</option>
+                  <option value="Base 2">Base 2</option>
+                  <option value="Base 3">Base 3</option>
+                  <option value="Build 1">Build 1</option>
+                  <option value="Build 2">Build 2</option>
+                  <option value="Peak">Peak</option>
+                  <option value="Taper">Taper</option>
+                  <option value="Race">Race</option>
+                  <option value="Recovery">Recovery</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="edit-volume">Volume</label>
+                <select id="edit-volume" name="volume">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="edit-intensity">Intensity</label>
+                <select id="edit-intensity" name="intensity">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="edit-focus">Training Focus</label>
+                <textarea id="edit-focus" name="focusText"></textarea>
+              </div>
+              <div class="field full">
+                <label for="edit-goal">Goal</label>
+                <textarea id="edit-goal" name="goalText"></textarea>
+              </div>
+            </div>
+
+            <div class="check-grid">
+              <label class="check-box" for="edit-ftp">
+                <input id="edit-ftp" name="ftpTest" type="checkbox">
+                <span>FTP Test</span>
+              </label>
+              <label class="check-box" for="edit-four-d">
+                <input id="edit-four-d" name="fourDTest" type="checkbox">
+                <span>4D Test</span>
+              </label>
+            </div>
+
+            <div class="meta-stack" id="editor-meta"></div>
+
+            <div class="editor-actions">
+              <button class="btn" id="cancel-edit-btn" type="button">Cancel</button>
+              <button class="btn primary" type="submit">Save Week</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const storageKey = 'season-plan-dashboard-payload';
+    const subtitle = document.getElementById('subtitle');
+    const macroRow = document.getElementById('macro-row');
+    const railPinned = document.getElementById('rail-pinned');
+    const weekRailBody = document.getElementById('week-rail-body');
+    const macroTimeline = document.getElementById('macro-timeline');
+    const overviewDates = document.getElementById('overview-dates');
+    const seasonStrip = document.getElementById('season-strip');
+    const monthPills = document.getElementById('month-pills');
+    const weekNav = document.getElementById('week-nav');
+    const viewCopy = document.getElementById('view-copy');
+    const viewContent = document.getElementById('view-content');
+    const exportBtn = document.getElementById('export-btn');
+    const yearViewBtn = document.getElementById('year-view-btn');
+    const monthlyViewBtn = document.getElementById('monthly-view-btn');
+    const summaryWeeks = document.getElementById('summary-weeks');
+    const summaryRaces = document.getElementById('summary-races');
+    const summaryMain = document.getElementById('summary-main');
+    const summaryRange = document.getElementById('summary-range');
+    const summarySelected = document.getElementById('summary-selected');
+    const summaryTests = document.getElementById('summary-tests');
+    const weekModal = document.getElementById('week-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalPreview = document.getElementById('modal-preview');
+    const weekEditForm = document.getElementById('week-edit-form');
+    const editorMeta = document.getElementById('editor-meta');
+    const openEditorBtn = document.getElementById('open-editor-btn');
+
+    let payload = null;
+    let context = null;
+    let currentView = 'year';
+    let selectedMonthKey = null;
+    let selectedWeek = null;
+    let editingWeek = null;
+    let weekOverrides = {};
+    const phaseColors = {
+      'Prep': '92D050',
+      'Base 1': '00B0F0',
+      'Base 2': '0070C0',
+      'Base 3': '00467F',
+      'Build 1': 'FFD966',
+      'Build 2': 'FFC000',
+      'Peak': 'FF00FF',
+      'Taper': 'FF6600',
+      'Race': 'FF0000',
+      'Recovery': 'BDBDBD'
+    };
+    const microTypeOptionsByPhase = {
+      'Prep': ['General', 'Recovery'],
+      'Base 1': ['General', 'Recovery'],
+      'Base 2': ['General', 'Recovery'],
+      'Base 3': ['General', 'Recovery'],
+      'Build 1': ['Build', 'Recovery'],
+      'Build 2': ['Build', 'Recovery'],
+      'Peak': ['Peak'],
+      'Taper': ['Taper'],
+      'Race': ['Race'],
+      'Recovery': ['Recovery']
+    };
+
+    function hexToRgb(hex) {
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+    }
+
+    function rgba(hex, alpha) {
+      const { r, g, b } = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function shortPhase(phase) {
+      return {
+        'Prep': 'PREP',
+        'Base 1': 'B1',
+        'Base 2': 'B2',
+        'Base 3': 'B3',
+        'Build 1': 'BU1',
+        'Build 2': 'BU2',
+        'Peak': 'PEAK',
+        'Taper': 'TAP',
+        'Race': 'RACE',
+        'Recovery': 'REC'
+      }[phase] || phase.toUpperCase();
+    }
+
+    function shortMacro(macro) {
+      return {
+        'General Preparation': 'GEN PREP',
+        'Pre-Competition': 'PRE COMP',
+        'Competition': 'COMP',
+        'Transition': 'TRANS'
+      }[macro] || macro.toUpperCase();
+    }
+
+    function weekByNumber(weekNumber) {
+      return context.planWeeks.find((week) => week.week === weekNumber);
+    }
+
+    function visibleWeeks() {
+      if (!context) {
+        return [];
+      }
+      if (currentView === 'month') {
+        return context.planWeeks.filter((week) => week.monthKey === selectedMonthKey);
+      }
+      return context.planWeeks;
+    }
+
+    function metricBoxes(level, crosses = false) {
+      return Array.from({ length: 5 }, (_, index) => {
+        const active = index < level;
+        const classes = active && !crosses ? 'metric-box filled' : 'metric-box';
+        const text = active && crosses ? 'X' : '';
+        return `<span class="${classes}">${text}</span>`;
+      }).join('');
+    }
+
+    function testsMarkup(week) {
+      const parts = [];
+      if (week.ftpTest) parts.push('<span class="flag ftp">FTP</span>');
+      if (week.fourDTest) parts.push('<span class="flag four-d">4D</span>');
+      return parts.join(' ') || '-';
+    }
+
+    function testsOverviewMarkup(week) {
+      const parts = [];
+      if (week.ftpTest) parts.push('<span class="flag ftp">FTP</span>');
+      if (week.fourDTest) parts.push('<span class="flag four-d">4D</span>');
+      return parts.join(' ');
+    }
+
+    function eventsMarkup(week) {
+      const parts = [];
+      if (week.hasMainRace) parts.push('<span class="flag main">R</span>');
+      if (week.hasSecondaryRace) parts.push('<span class="flag secondary">LP</span>');
+      if (week.trainingCamps && week.trainingCamps.length) parts.push('<span class="flag camp">Camp</span>');
+      return parts.join(' ') || '-';
+    }
+
+    function eventsOverviewMarkup(week) {
+      const parts = [];
+      if (week.hasMainRace) parts.push('<span class="flag main">R</span>');
+      if (week.hasSecondaryRace) parts.push('<span class="flag secondary">LP</span>');
+      if (week.trainingCamps && week.trainingCamps.length) parts.push('<span class="flag camp">Camp</span>');
+      return parts.join(' ');
+    }
+
+    function eventsCompact(week) {
+      const parts = [];
+      if (week.hasMainRace) parts.push('R');
+      if (week.hasSecondaryRace) parts.push('LP');
+      if (week.trainingCamps && week.trainingCamps.length) parts.push('CAMP');
+      return parts.join('/') || '-';
+    }
+
+    function testsCompact(week) {
+      const parts = [];
+      if (week.ftpTest) parts.push('FTP');
+      if (week.fourDTest) parts.push('4D');
+      return parts.join('/') || '-';
+    }
+
+    function populateMicroOptions(phase, currentType) {
+      const select = document.getElementById('edit-micro');
+      const options = microTypeOptionsByPhase[phase] || ['Recovery'];
+      select.innerHTML = options.map((option) => `<option value="${option}">${option}</option>`).join('');
+      if (currentType && options.includes(currentType)) {
+        select.value = currentType;
+      } else if (options.length) {
+        select.value = options[0];
+      }
+    }
+
+    function eventsSummaryMarkup(week) {
+      const labels = [];
+      if (week.races.length) {
+        labels.push(escapeHtml(week.races.join(', ')));
+      }
+      if (week.trainingCamps && week.trainingCamps.length) {
+        labels.push(escapeHtml(week.trainingCamps.join(', ')));
+      }
+      const combined = [eventsMarkup(week), ...labels].filter((value) => value && value !== '-').join(' ');
+      return combined || '-';
+    }
+
+    function setGridColumns(element, totalWeeks) {
+      element.style.gridTemplateColumns = `repeat(${totalWeeks}, minmax(44px, 1fr))`;
+    }
+
+    function currentMacroBlock() {
+      if (!context || !selectedWeek) {
+        return null;
+      }
+      return context.macroBlocks.find((block) => selectedWeek >= block.startWeek && selectedWeek <= block.endWeek) || null;
+    }
+
+    function persistPayload() {
+      payload.weekOverrides = weekOverrides;
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+    }
+
+    async function fetchContext() {
+      const response = await fetch('/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, weekOverrides })
+      });
+      if (!response.ok) {
+        throw new Error('Dashboard data could not be loaded.');
+      }
+      context = await response.json();
+      const selected = weekByNumber(selectedWeek);
+      if (!selected) {
+        const mainWeek = context.planWeeks.find((week) => week.hasMainRace) || context.planWeeks[0];
+        selectedWeek = mainWeek ? mainWeek.week : 1;
+      }
+      const current = weekByNumber(selectedWeek);
+      if (current) {
+        selectedMonthKey = current.monthKey;
+      }
+    }
+
+    function renderSummary() {
+      const weeks = visibleWeeks();
+      const selected = weekByNumber(selectedWeek);
+      const mainRaceWeeks = context.planWeeks.filter((week) => week.hasMainRace);
+      summaryWeeks.textContent = context.totalWeeks;
+      summaryRaces.textContent = context.planWeeks.filter((week) => week.races.length).length;
+      summaryMain.textContent = mainRaceWeeks.length ? `${mainRaceWeeks.length} scheduled` : '-';
+      summarySelected.textContent = selected ? `W${selected.week}` : '-';
+      summaryTests.textContent = `${context.planWeeks.filter((week) => week.ftpTest).length} FTP / ${context.planWeeks.filter((week) => week.fourDTest).length} 4D`;
+
+      if (!weeks.length) {
+        summaryRange.textContent = '-';
+      } else {
+        summaryRange.textContent = `${weeks[0].weekRangeShort} -> ${weeks[weeks.length - 1].weekRangeShort}`;
+      }
+
+      const currentMacro = currentMacroBlock();
+      railPinned.textContent = currentMacro
+        ? `Pinned Macro Block\n${currentMacro.macro} · W${currentMacro.startWeek}-W${currentMacro.endWeek}`
+        : 'Pinned Macro Block\n-';
+    }
+
+    function renderMacroRow() {
+      macroRow.innerHTML = '';
+      context.macroBlocks.forEach((block) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'macro-chip';
+        chip.textContent = `${shortMacro(block.macro)} · W${block.startWeek}-${block.endWeek}`;
+        chip.addEventListener('click', () => {
+          selectedWeek = block.startWeek;
+          selectedMonthKey = weekByNumber(selectedWeek).monthKey;
+          currentView = 'week';
+          syncButtons();
+          renderDashboard();
+        });
+        macroRow.appendChild(chip);
+      });
+    }
+
+    function renderWeekRail() {
+      weekRailBody.innerHTML = '';
+      context.planWeeks.forEach((week) => {
+        const row = document.createElement('tr');
+        const weekHighlight = week.hasMainRace ? 'race-week' : (week.hasSecondaryRace ? 'secondary-week' : '');
+        row.className = `rail-row ${selectedWeek === week.week ? 'active' : ''} ${weekHighlight}`.trim();
+        row.innerHTML = `
+          <td>${week.week}</td>
+          <td>${escapeHtml(week.month.slice(0, 3))} ${week.day}</td>
+          <td>${shortMacro(week.macro)}</td>
+          <td><span class="phase-dot" style="background:#${week.color};"></span>${shortPhase(week.phase)}</td>
+          <td>${escapeHtml(week.micro)}</td>
+          <td>${escapeHtml(testsCompact(week))}</td>
+          <td>${escapeHtml(eventsCompact(week))}</td>
+          <td>V${week.volume}/I${week.intensity}</td>
+        `;
+        row.addEventListener('click', () => {
+          selectedWeek = week.week;
+          selectedMonthKey = week.monthKey;
+          renderDashboard();
+          openWeekModal(week.week);
+        });
+        weekRailBody.appendChild(row);
+      });
+    }
+
+    function renderMacroTimeline() {
+      macroTimeline.innerHTML = '';
+      setGridColumns(macroTimeline, context.totalWeeks);
+      context.macroBlocks.forEach((block) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'macro-band';
+        button.style.gridColumn = `${block.startWeek} / ${block.endWeek + 1}`;
+        button.innerHTML = `
+          <strong>${escapeHtml(shortMacro(block.macro))}</strong>
+          <span>W${block.startWeek}-W${block.endWeek}</span>
+        `;
+        button.addEventListener('click', () => {
+          selectedWeek = block.startWeek;
+          selectedMonthKey = weekByNumber(selectedWeek).monthKey;
+          currentView = 'year';
+          syncButtons();
+          renderDashboard();
+          openWeekModal(block.startWeek);
+        });
+        macroTimeline.appendChild(button);
+      });
+    }
+
+    function renderOverviewDates() {
+      overviewDates.innerHTML = '';
+      setGridColumns(overviewDates, context.totalWeeks);
+      context.planWeeks.forEach((week) => {
+        const cell = document.createElement('div');
+        cell.className = 'date-cell';
+        const [endYear, endMonthNumber, endDay] = week.sunday.split('-').map(Number);
+        const endMonth = new Date(endYear, endMonthNumber - 1, endDay).toLocaleString('en-US', { month: 'short' });
+        const sameMonth = endMonth === week.month.slice(0, 3);
+        cell.textContent = sameMonth ? `${week.month.slice(0, 3)} ${week.day}-${endDay}` : `${week.month.slice(0, 3)} ${week.day}-${endMonth} ${endDay}`;
+        overviewDates.appendChild(cell);
+      });
+    }
+
+    function renderSeasonStrip() {
+      seasonStrip.innerHTML = '';
+      setGridColumns(seasonStrip, context.totalWeeks);
+      context.planWeeks.forEach((week) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `strip-cell ${selectedWeek === week.week ? 'active' : ''}`;
+        button.style.setProperty('--accent-color', `#${week.color}`);
+        button.innerHTML = `
+          <div class="strip-line">W${week.week}</div>
+          <div class="strip-line strong">${escapeHtml(week.micro.replace(/\s+/g, ' '))}</div>
+          <div class="strip-line">${shortPhase(week.phase)}</div>
+          <div class="strip-flags">${testsOverviewMarkup(week)} ${eventsOverviewMarkup(week)}</div>
+        `;
+        button.addEventListener('click', () => {
+          selectedWeek = week.week;
+          selectedMonthKey = week.monthKey;
+          renderDashboard();
+          openWeekModal(week.week);
+        });
+        seasonStrip.appendChild(button);
+      });
+    }
+
+    function renderMonthPills() {
+      monthPills.innerHTML = '';
+      monthPills.classList.toggle('hidden', currentView !== 'month');
+      context.monthGroups.forEach((month) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `month-pill ${selectedMonthKey === month.key ? 'active' : ''}`;
+        button.textContent = month.label;
+        button.addEventListener('click', () => {
+          selectedMonthKey = month.key;
+          currentView = 'month';
+          syncButtons();
+          renderDashboard();
+        });
+        monthPills.appendChild(button);
+      });
+    }
+
+    function buildCondensedMatrix(weeks) {
+      return `
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th class="row-label sticky-corner">Row</th>
+              ${weeks.map((week) => `<th class="clickable" data-week="${week.week}">W${week.week}<br>${escapeHtml(week.weekRangeShort)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th class="row-label">Macro</th>
+              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}">${escapeHtml(week.macro)}</td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Phase</th>
+              ${weeks.map((week) => `<td class="clickable phase-cell" data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.phase)}</td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Micro</th>
+              ${weeks.map((week) => `<td class="clickable micro-cell" data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.micro)}</td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Week Range</th>
+              ${weeks.map((week) => `<td class="clickable week-range-cell" data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.weekRangeShort)}</td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Volume</th>
+              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}"><div class="metric-inline">${metricBoxes(week.volume)}</div></td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Intensity</th>
+              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}"><div class="metric-inline">${metricBoxes(week.intensity, true)}</div></td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Tests</th>
+              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}">${testsMarkup(week)}</td>`).join('')}
+            </tr>
+            <tr>
+              <th class="row-label">Events</th>
+              ${weeks.map((week) => `<td class="clickable race-cell" data-week="${week.week}">${eventsSummaryMarkup(week)}</td>`).join('')}
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function detailCardMarkup(week, clickable = false) {
+      return `
+        <article class="detail-card ${clickable ? 'clickable' : ''}" data-week="${week.week}" style="--accent-color:#${week.color};">
+          <div class="detail-head">
+            <div>
+              <div class="detail-meta">Week ${week.week}\n${escapeHtml(week.weekRangeShort)}</div>
+              <div class="phase-tag">${escapeHtml(week.phase)}</div>
+              <div class="detail-main">${escapeHtml(week.micro)}</div>
+            </div>
+            <div class="detail-date">${escapeHtml(week.macro)}\n${escapeHtml(week.month)} ${week.day}</div>
+          </div>
+          <div class="dense-table">
+            <div class="dense-row"><strong>Week Range</strong><div>${escapeHtml(week.weekRangeFull)}</div></div>
+            <div class="dense-row"><strong>Volume</strong><div class="metric-inline">${metricBoxes(week.volume)}</div></div>
+            <div class="dense-row"><strong>Intensity</strong><div class="metric-inline">${metricBoxes(week.intensity, true)}</div></div>
+            <div class="dense-row"><strong>Tests</strong><div>${testsMarkup(week)}</div></div>
+            <div class="dense-row"><strong>Events</strong><div>${eventsSummaryMarkup(week)}</div></div>
+          </div>
+          <div class="block">
+            <strong>Training Focus</strong>
+            <p>${escapeHtml(week.focusText)}</p>
+          </div>
+          <div class="block">
+            <strong>Goal</strong>
+            <p>${escapeHtml(week.goalText)}</p>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderYearView() {
+      viewCopy.textContent = 'Super-condensed matrix with all key fields visible at a glance. Training focus and goals move into the shared detailed card/editor.';
+      viewContent.innerHTML = buildCondensedMatrix(context.planWeeks);
+    }
+
+    function renderMonthView() {
+      const weeks = context.planWeeks.filter((week) => week.monthKey === selectedMonthKey);
+      if (!weeks.length) {
+        viewContent.innerHTML = '<div class="empty">No weeks available for this month.</div>';
+        return;
+      }
+      viewCopy.textContent = 'Monthly view uses full week cards only. FTP and 4D remain highlighted here, with the full week range shown clearly on every card.';
+      viewContent.innerHTML = `
+        <div class="detail-grid monthly">
+          ${weeks.map((week) => detailCardMarkup(week, true)).join('')}
+        </div>
+      `;
+    }
+
+    function syncButtons() {
+      yearViewBtn.classList.toggle('active', currentView === 'year');
+      monthlyViewBtn.classList.toggle('active', currentView === 'month');
+      monthPills.classList.toggle('hidden', currentView !== 'month');
+    }
+
+    function renderDashboard() {
+      renderSummary();
+      renderMacroRow();
+      renderWeekRail();
+      renderMacroTimeline();
+      renderOverviewDates();
+      renderSeasonStrip();
+      renderMonthPills();
+
+      if (currentView === 'month') {
+        renderMonthView();
+      } else {
+        renderYearView();
+      }
+    }
+
+    function closeWeekModal() {
+      weekModal.classList.add('hidden');
+      weekModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      editingWeek = null;
+    }
+
+    function openWeekModal(weekNumber) {
+      const week = weekByNumber(weekNumber);
+      if (!week) {
+        return;
+      }
+      editingWeek = weekNumber;
+      modalTitle.textContent = `Week ${week.week} Detail And Editor`;
+      modalPreview.innerHTML = detailCardMarkup(week, false);
+      document.getElementById('edit-phase').value = week.phase;
+      populateMicroOptions(week.phase, week.microType);
+      document.getElementById('edit-volume').value = String(week.volume);
+      document.getElementById('edit-intensity').value = String(week.intensity);
+      document.getElementById('edit-focus').value = week.focusText;
+      document.getElementById('edit-goal').value = week.goalText;
+      document.getElementById('edit-ftp').checked = week.ftpTest;
+      document.getElementById('edit-four-d').checked = week.fourDTest;
+      editorMeta.innerHTML = `
+        <div>Week Range: ${escapeHtml(week.weekRangeFull)}</div>
+        <div>Macro Cycle: ${escapeHtml(week.macro)}</div>
+        <div>Phase: ${escapeHtml(week.phase)}</div>
+        <div>Race Marker: ${week.races.length ? escapeHtml(week.races.join(', ')) : '-'}</div>
+        <div>Training Camp: ${week.trainingCamps && week.trainingCamps.length ? escapeHtml(week.trainingCamps.join(', ')) : '-'}</div>
+      `;
+      weekModal.classList.remove('hidden');
+      weekModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+    }
+
+    async function saveWeekEdits(event) {
+      event.preventDefault();
+      if (!editingWeek) {
+        return;
+      }
+      weekOverrides[String(editingWeek)] = {
+        phase: document.getElementById('edit-phase').value,
+        microType: document.getElementById('edit-micro').value,
+        volume: Number(document.getElementById('edit-volume').value),
+        intensity: Number(document.getElementById('edit-intensity').value),
+        ftpTest: document.getElementById('edit-ftp').checked,
+        fourDTest: document.getElementById('edit-four-d').checked,
+        focusText: document.getElementById('edit-focus').value.trim(),
+        goalText: document.getElementById('edit-goal').value.trim()
+      };
+      persistPayload();
+      try {
+        await fetchContext();
+        renderDashboard();
+        closeWeekModal();
+      } catch (error) {
+        subtitle.textContent = error.message;
+      }
+    }
+
+    async function resetWeekEdits() {
+      if (!editingWeek) {
+        return;
+      }
+      delete weekOverrides[String(editingWeek)];
+      persistPayload();
+      try {
+        await fetchContext();
+        renderDashboard();
+        closeWeekModal();
+      } catch (error) {
+        subtitle.textContent = error.message;
+      }
+    }
+
+    async function loadContext() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) {
+        subtitle.textContent = 'No form data found. Go back to the form and open the dashboard from there.';
+        viewContent.innerHTML = '<div class="empty">No payload found in local storage.</div>';
+        return;
+      }
+
+      payload = JSON.parse(raw);
+      weekOverrides = payload.weekOverrides || {};
+      try {
+        await fetchContext();
+        const selected = weekByNumber(selectedWeek);
+        selectedMonthKey = selected ? selected.monthKey : context.monthGroups[0]?.key || null;
+        subtitle.textContent = `${context.athlete.riderFirst} ${context.athlete.riderLast} | Coach ${context.athlete.coachFirst} ${context.athlete.coachLast} | Year ${context.athlete.year}`;
+        syncButtons();
+        renderDashboard();
+      } catch (error) {
+        subtitle.textContent = error.message;
+        viewContent.innerHTML = `<div class="empty">${error.message}</div>`;
+      }
+    }
+
+    async function exportExcel() {
+      if (!payload) {
+        return;
+      }
+      exportBtn.disabled = true;
+      persistPayload();
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, weekOverrides })
+        });
+        if (!response.ok) {
+          throw new Error('Excel export failed.');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const contentDisposition = response.headers.get('Content-Disposition') || '';
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+        const filename = filenameMatch ? filenameMatch[1] : `SeasonPlan_${payload.riderLast}_${payload.year}.xlsx`;
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        subtitle.textContent = error.message;
+      } finally {
+        exportBtn.disabled = false;
+      }
+    }
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = '/';
+    });
+    yearViewBtn.addEventListener('click', () => {
+      currentView = 'year';
+      syncButtons();
+      renderDashboard();
+    });
+    monthlyViewBtn.addEventListener('click', () => {
+      currentView = 'month';
+      syncButtons();
+      renderDashboard();
+    });
+    exportBtn.addEventListener('click', exportExcel);
+    openEditorBtn.addEventListener('click', () => {
+      if (selectedWeek) {
+        openWeekModal(selectedWeek);
+      }
+    });
+    document.getElementById('edit-phase').addEventListener('change', (event) => {
+      populateMicroOptions(event.target.value);
+      const previewCard = modalPreview.querySelector('.detail-card');
+      const phaseTag = modalPreview.querySelector('.phase-tag');
+      if (previewCard) {
+        previewCard.style.setProperty('--accent-color', `#${phaseColors[event.target.value] || '666666'}`);
+      }
+      if (phaseTag) {
+        phaseTag.textContent = event.target.value;
+      }
+    });
+    document.getElementById('close-modal-btn').addEventListener('click', closeWeekModal);
+    document.getElementById('cancel-edit-btn').addEventListener('click', closeWeekModal);
+    document.getElementById('reset-week-btn').addEventListener('click', resetWeekEdits);
+    weekEditForm.addEventListener('submit', saveWeekEdits);
+    weekModal.addEventListener('click', (event) => {
+      if (event.target === weekModal) {
+        closeWeekModal();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !weekModal.classList.contains('hidden')) {
+        closeWeekModal();
+      }
+    });
+    viewContent.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-week]');
+      if (!trigger) {
+        return;
+      }
+      const weekNumber = Number(trigger.dataset.week);
+      if (!weekNumber) {
+        return;
+      }
+      selectedWeek = weekNumber;
+      selectedMonthKey = weekByNumber(weekNumber).monthKey;
+      renderDashboard();
+      if (trigger.dataset.openEditor === 'true' || trigger.closest('.detail-card') || trigger.closest('.matrix')) {
+        openWeekModal(weekNumber);
+      }
+    });
+
+    loadContext();
+  </script>
+</body>
+</html>

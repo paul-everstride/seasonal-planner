@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Season Plan Control Room</title>
+  <style>
+    :root {
+      --bg: #060b12;
+      --bg-2: #0b1119;
+      --bg-3: #0f1722;
+      --line: #1e2835;
+      --line-2: #263243;
+      --text: #d7e2f0;
+      --muted: #7f8b9a;
+      --accent: #e8400c;
+      --good: #17c964;
+      --cyan: #46d8f7;
+      --danger: #f31260;
+      --shadow: 0 10px 26px rgba(0, 0, 0, 0.26);
+      --mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 16px 10px 180px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--bg-2);
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: linear-gradient(180deg, #060b12 0%, #081019 100%);
+    }
+
+    .topbar h1 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+      line-height: 1;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+
+    .topbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      font-family: var(--mono);
+      white-space: pre-line;
+    }
+
+    .form-wrap {
+      padding: 10px;
+    }
+
+    form {
+      display: grid;
+      gap: 8px;
+    }
+
+    fieldset {
+      margin: 0;
+      padding: 8px;
+      border: 1px solid var(--line);
+      background: #08111a;
+    }
+
+    legend {
+      padding: 0 6px;
+      color: var(--cyan);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line-2);
+      background: var(--bg-3);
+      color: var(--text);
+      padding: 8px 9px;
+      border-radius: 0;
+      font-size: 0.8rem;
+      font-family: var(--mono);
+    }
+
+    input::placeholder {
+      color: #657384;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: inset 0 0 0 1px var(--cyan);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .section-copy {
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-family: var(--mono);
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .stack {
+      display: grid;
+      gap: 6px;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr auto;
+      gap: 6px;
+      align-items: end;
+      padding: 6px;
+      border: 1px solid var(--line);
+      background: #0a121c;
+    }
+
+    .btn {
+      border: 1px solid var(--line-2);
+      background: var(--bg-3);
+      color: var(--text);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn:hover {
+      border-color: var(--cyan);
+    }
+
+    .btn.primary {
+      background: var(--good);
+      border-color: var(--good);
+      color: #041019;
+    }
+
+    .btn.secondary {
+      background: #0d1d2c;
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .btn.ghost {
+      color: var(--muted);
+    }
+
+    .btn.remove {
+      width: 42px;
+      min-width: 42px;
+      padding: 8px 0;
+      color: #ff7a7a;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .status {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      text-transform: uppercase;
+    }
+
+    .status.error {
+      color: #ff7a7a;
+    }
+
+    .status.success {
+      color: var(--good);
+    }
+
+    .status.info {
+      color: var(--cyan);
+    }
+
+    @media (max-width: 760px) {
+      .grid,
+      .event-row,
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .btn.remove {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel topbar">
+      <h1>Season Plan Control Room</h1>
+      <p>1. Enter athlete, season and event data.
+2. Add up to 3 main races. These drive the planning logic.
+3. Add up to 15 secondary races and up to 15 training camps. These appear in the plan but do not change the schedule build.
+4. Choose Excel Generate for export or Dashboard View to inspect and edit weeks.</p>
+    </section>
+
+    <section class="panel form-wrap">
+      <form id="season-plan-form">
+        <fieldset>
+          <legend>Athlete Info</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="riderFirst">Rider First Name</label>
+              <input id="riderFirst" type="text" required>
+            </div>
+            <div class="field">
+              <label for="riderLast">Rider Last Name</label>
+              <input id="riderLast" type="text" required>
+            </div>
+            <div class="field">
+              <label for="coachFirst">Coach First Name</label>
+              <input id="coachFirst" type="text" required>
+            </div>
+            <div class="field">
+              <label for="coachLast">Coach Last Name</label>
+              <input id="coachLast" type="text" required>
+            </div>
+            <div class="field full">
+              <label for="year">Year</label>
+              <input id="year" type="number" min="2000" max="2100" required>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Season Dates</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="seasonStartDate">Season Start Date</label>
+              <input id="seasonStartDate" class="date-input" type="text" inputmode="numeric" placeholder="mm/dd/yyyy" required>
+            </div>
+            <div class="field">
+              <label for="seasonEndDate">Season End Date</label>
+              <input id="seasonEndDate" class="date-input" type="text" inputmode="numeric" placeholder="mm/dd/yyyy" required>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Main Races</legend>
+          <div class="section-head">
+            <div class="section-copy">Up to 3 main races. These change the schedule structure.</div>
+            <button class="btn ghost" id="add-main-race" type="button">Add Main Race</button>
+          </div>
+          <div class="stack" id="main-races"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Secondary Races</legend>
+          <div class="section-head">
+            <div class="section-copy">Up to 15 secondary races. These are displayed only.</div>
+            <button class="btn ghost" id="add-secondary-race" type="button">Add Secondary Race</button>
+          </div>
+          <div class="stack" id="secondary-races"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Training Camps</legend>
+          <div class="section-head">
+            <div class="section-copy">Up to 15 camps. These are displayed only.</div>
+            <button class="btn ghost" id="add-training-camp" type="button">Add Training Camp</button>
+          </div>
+          <div class="stack" id="training-camps"></div>
+        </fieldset>
+
+        <div class="actions">
+          <button class="btn primary" id="excel-btn" type="button">Excel Generate</button>
+          <button class="btn secondary" id="dashboard-btn" type="button">Dashboard View</button>
+        </div>
+        <div class="status" id="status-message" aria-live="polite"></div>
+      </form>
+    </section>
+  </div>
+
+  <template id="event-row-template">
+    <div class="event-row">
+      <div class="field">
+        <label>Event Name</label>
+        <input class="event-name" type="text" required>
+      </div>
+      <div class="field">
+        <label>Event Date</label>
+        <input class="event-date date-input" type="text" inputmode="numeric" placeholder="mm/dd/yyyy" required>
+      </div>
+      <button class="btn remove" type="button">X</button>
+    </div>
+  </template>
+
+  <script>
+    const form = document.getElementById('season-plan-form');
+    const eventTemplate = document.getElementById('event-row-template');
+    const excelButton = document.getElementById('excel-btn');
+    const dashboardButton = document.getElementById('dashboard-btn');
+    const statusMessage = document.getElementById('status-message');
+    const dashboardStorageKey = 'season-plan-dashboard-payload';
+    const limits = {
+      main: 3,
+      secondary: 15,
+      camp: 15
+    };
+    const sections = {
+      main: document.getElementById('main-races'),
+      secondary: document.getElementById('secondary-races'),
+      camp: document.getElementById('training-camps')
+    };
+
+    document.getElementById('year').value = new Date().getFullYear();
+
+    function setStatus(message, type) {
+      statusMessage.textContent = message;
+      statusMessage.className = `status ${type || ''}`.trim();
+    }
+
+    function countRows(type) {
+      return sections[type].querySelectorAll('.event-row').length;
+    }
+
+    function addEventRow(type, event = { name: '', date: '' }) {
+      if (countRows(type) >= limits[type]) {
+        return;
+      }
+
+      const fragment = eventTemplate.content.cloneNode(true);
+      const row = fragment.querySelector('.event-row');
+      const labelPrefix = {
+        main: 'Main Race',
+        secondary: 'Secondary Race',
+        camp: 'Training Camp'
+      }[type];
+      const labels = fragment.querySelectorAll('label');
+      labels[0].textContent = `${labelPrefix} Name`;
+      labels[1].textContent = `${labelPrefix} Date`;
+      fragment.querySelector('.event-name').value = event.name || '';
+      fragment.querySelector('.event-date').value = event.date || '';
+      initializeDateInput(fragment.querySelector('.event-date'));
+      fragment.querySelector('.remove').addEventListener('click', () => row.remove());
+      sections[type].appendChild(fragment);
+    }
+
+    function collectEvents(type) {
+      return Array.from(sections[type].querySelectorAll('.event-row')).map((row) => ({
+        name: row.querySelector('.event-name').value.trim(),
+        date: row.querySelector('.event-date').value
+      })).filter((event) => event.name && event.date);
+    }
+
+    function getPayload() {
+      const mainRaces = collectEvents('main');
+      const secondaryRaces = collectEvents('secondary');
+      const trainingCamps = collectEvents('camp');
+      return {
+        riderFirst: document.getElementById('riderFirst').value.trim(),
+        riderLast: document.getElementById('riderLast').value.trim(),
+        coachFirst: document.getElementById('coachFirst').value.trim(),
+        coachLast: document.getElementById('coachLast').value.trim(),
+        year: Number(document.getElementById('year').value),
+        seasonStartDate: document.getElementById('seasonStartDate').value,
+        seasonEndDate: document.getElementById('seasonEndDate').value,
+        mainRaces,
+        secondaryRaces,
+        trainingCamps
+      };
+    }
+
+    function validatePayload(payload) {
+      return payload.riderFirst && payload.riderLast && payload.coachFirst && payload.coachLast &&
+        payload.year && payload.seasonStartDate && payload.seasonEndDate && payload.mainRaces.length > 0;
+    }
+
+    async function generateExcel() {
+      const payload = getPayload();
+      if (!validatePayload(payload)) {
+        setStatus('Please complete the required fields and add at least one main race.', 'error');
+        return;
+      }
+
+      excelButton.disabled = true;
+      setStatus('Generating Excel export...', 'info');
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('Excel export failed.');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const contentDisposition = response.headers.get('Content-Disposition') || '';
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+        const filename = filenameMatch ? filenameMatch[1] : `SeasonPlan_${payload.riderLast}_${payload.year}.xlsx`;
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(url);
+        setStatus('Excel export generated.', 'success');
+      } catch (error) {
+        setStatus(error.message || 'Excel export failed.', 'error');
+      } finally {
+        excelButton.disabled = false;
+      }
+    }
+
+    function openDashboard() {
+      const payload = getPayload();
+      if (!validatePayload(payload)) {
+        setStatus('Please complete the required fields and add at least one main race.', 'error');
+        return;
+      }
+
+      localStorage.setItem(dashboardStorageKey, JSON.stringify(payload));
+      const newTab = window.open('/dashboard', '_blank');
+      if (!newTab) {
+        window.location.href = '/dashboard';
+      }
+      setStatus('Dashboard opened in a new tab.', 'success');
+    }
+
+    function initializeDateInput(input) {
+      input.addEventListener('focus', () => {
+        if (input.type !== 'date') {
+          input.type = 'date';
+        }
+      });
+      input.addEventListener('blur', () => {
+        if (!input.value) {
+          input.type = 'text';
+        }
+      });
+    }
+
+    document.getElementById('add-main-race').addEventListener('click', () => addEventRow('main'));
+    document.getElementById('add-secondary-race').addEventListener('click', () => addEventRow('secondary'));
+    document.getElementById('add-training-camp').addEventListener('click', () => addEventRow('camp'));
+    excelButton.addEventListener('click', generateExcel);
+    dashboardButton.addEventListener('click', openDashboard);
+    form.addEventListener('submit', (event) => event.preventDefault());
+    document.querySelectorAll('.date-input').forEach(initializeDateInput);
+    document.addEventListener('pointerdown', (event) => {
+      const input = event.target.closest('.date-input');
+      if (!input) {
+        return;
+      }
+      event.preventDefault();
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.setTimeout(() => {
+        if (input.type !== 'date') {
+          input.type = 'date';
+        }
+        input.focus({ preventScroll: true });
+        if (typeof input.showPicker === 'function') {
+          input.showPicker();
+        }
+      }, 120);
+    });
+
+    addEventRow('main');
+  </script>
+</body>
+</html>
