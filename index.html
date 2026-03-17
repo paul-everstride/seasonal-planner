@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Season Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FFFFFF;
+      --bg-subtle: #F7F7F5;
+      --bg-hover: #F1F1EF;
+      --border: #E9E9E7;
+      --border-hover: #C7C7C5;
+      --text: #37352F;
+      --text-2: #6B6B6B;
+      --text-muted: #9B9A97;
+      --text-placeholder: #C7C7C5;
+      --accent: #2383E2;
+      --accent-bg: #EBF5FB;
+      --accent-border: #A9CCF1;
+      --success: #0F7B6C;
+      --success-bg: #E7F5F3;
+      --success-dark: #0A5C51;
+      --warn: #AD6100;
+      --warn-bg: #FEF9C3;
+      --danger: #C0392B;
+      --danger-bg: #FCE4E4;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+      --mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    button, input, textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg-subtle);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 40px 24px 120px;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      margin: 0 0 6px;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--text-2);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .header-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-top: 10px;
+    }
+
+    .header-step {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-2);
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* Card / section wrapper */
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    /* Section */
+    .section {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .section-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .section-body {
+      padding: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: 0.01em;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input::placeholder {
+      color: var(--text-placeholder);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-bg);
+    }
+
+    input[type="date"] {
+      font-family: var(--sans);
+    }
+
+    /* Event rows */
+    .stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr auto;
+      gap: 8px;
+      align-items: end;
+      padding: 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-2);
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+
+    .btn:active {
+      background: #EAEAE8;
+    }
+
+    .btn.primary {
+      background: var(--success);
+      border-color: var(--success);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    .btn.primary:hover {
+      background: var(--success-dark);
+      border-color: var(--success-dark);
+      color: #FFFFFF;
+    }
+
+    .btn.secondary {
+      background: var(--accent-bg);
+      border-color: var(--accent-border);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .btn.secondary:hover {
+      background: #D9ECFB;
+      border-color: var(--accent);
+    }
+
+    .btn.ghost {
+      border-color: transparent;
+      background: transparent;
+      color: var(--accent);
+      font-size: 0.78rem;
+    }
+
+    .btn.ghost:hover {
+      background: var(--accent-bg);
+      border-color: var(--accent-border);
+    }
+
+    .btn.remove {
+      width: 34px;
+      min-width: 34px;
+      padding: 7px 0;
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .btn.remove:hover {
+      background: var(--danger-bg);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Actions */
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions .btn {
+      padding: 10px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 7px;
+    }
+
+    /* Status */
+    .status {
+      min-height: 18px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 0 2px;
+    }
+
+    .status:not(:empty) {
+      padding: 8px 12px;
+    }
+
+    .status.error {
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .status.success {
+      color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .status.info {
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 20px 16px 80px; }
+      .grid, .event-row, .actions {
+        grid-template-columns: 1fr;
+      }
+      .btn.remove {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>Season Planner</h1>
+      <div class="header-steps">
+        <div class="header-step"><span class="step-num">1</span>Enter athlete, coach, and season dates.</div>
+        <div class="header-step"><span class="step-num">2</span>Add up to 3 main races — these drive the planning schedule.</div>
+        <div class="header-step"><span class="step-num">3</span>Add secondary races and training camps (display only).</div>
+        <div class="header-step"><span class="step-num">4</span>Export to Excel or open the Dashboard to inspect and edit weeks.</div>
+      </div>
+    </div>
+
+    <section class="card">
+      <form id="season-plan-form">
+        <div style="padding: 20px; display: grid; gap: 16px;">
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-title">Athlete Info</span>
+            </div>
+            <div class="section-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="riderFirst">Rider First Name</label>
+                  <input id="riderFirst" type="text" placeholder="First name" required>
+                </div>
+                <div class="field">
+                  <label for="riderLast">Rider Last Name</label>
+                  <input id="riderLast" type="text" placeholder="Last name" required>
+                </div>
+                <div class="field">
+                  <label for="coachFirst">Coach First Name</label>
+                  <input id="coachFirst" type="text" placeholder="First name" required>
+                </div>
+                <div class="field">
+                  <label for="coachLast">Coach Last Name</label>
+                  <input id="coachLast" type="text" placeholder="Last name" required>
+                </div>
+                <div class="field full">
+                  <label for="year">Season Year</label>
+                  <input id="year" type="number" min="2000" max="2100" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-title">Season Dates</span>
+            </div>
+            <div class="section-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="seasonStartDate">Start Date</label>
+                  <input id="seasonStartDate" class="date-input" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="seasonEndDate">End Date</label>
+                  <input id="seasonEndDate" class="date-input" type="date" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-title">Main Races</span>
+              <span class="section-hint">Up to 3 — drive schedule structure</span>
+              <button class="btn ghost" id="add-main-race" type="button">+ Add Race</button>
+            </div>
+            <div class="section-body">
+              <div class="stack" id="main-races"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-title">Secondary Races</span>
+              <span class="section-hint">Up to 15 — display only</span>
+              <button class="btn ghost" id="add-secondary-race" type="button">+ Add Race</button>
+            </div>
+            <div class="section-body">
+              <div class="stack" id="secondary-races"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-title">Training Camps</span>
+              <span class="section-hint">Up to 15 — display only</span>
+              <button class="btn ghost" id="add-training-camp" type="button">+ Add Camp</button>
+            </div>
+            <div class="section-body">
+              <div class="stack" id="training-camps"></div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="excel-btn" type="button">Export to Excel</button>
+            <button class="btn secondary" id="dashboard-btn" type="button">Open Dashboard</button>
+          </div>
+          <div class="status" id="status-message" aria-live="polite"></div>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <template id="event-row-template">
+    <div class="event-row">
+      <div class="field">
+        <label>Event Name</label>
+        <input class="event-name" type="text" required>
+      </div>
+      <div class="field">
+        <label>Event Date</label>
+        <input class="event-date date-input" type="date" required>
+      </div>
+      <button class="btn remove" type="button">×</button>
+    </div>
+  </template>
+
+  <script>
+    const form = document.getElementById('season-plan-form');
+    const eventTemplate = document.getElementById('event-row-template');
+    const excelButton = document.getElementById('excel-btn');
+    const dashboardButton = document.getElementById('dashboard-btn');
+    const statusMessage = document.getElementById('status-message');
+    const dashboardStorageKey = 'season-plan-dashboard-payload';
+    const limits = {
+      main: 3,
+      secondary: 15,
+      camp: 15
+    };
+    const sections = {
+      main: document.getElementById('main-races'),
+      secondary: document.getElementById('secondary-races'),
+      camp: document.getElementById('training-camps')
+    };
+
+    document.getElementById('year').value = new Date().getFullYear();
+
+    function setStatus(message, type) {
+      statusMessage.textContent = message;
+      statusMessage.className = `status ${type || ''}`.trim();
+    }
+
+    function countRows(type) {
+      return sections[type].querySelectorAll('.event-row').length;
+    }
+
+    function addEventRow(type, event = { name: '', date: '' }) {
+      if (countRows(type) >= limits[type]) {
+        return;
+      }
+
+      const fragment = eventTemplate.content.cloneNode(true);
+      const row = fragment.querySelector('.event-row');
+      const labelPrefix = {
+        main: 'Main Race',
+        secondary: 'Secondary Race',
+        camp: 'Training Camp'
+      }[type];
+      const labels = fragment.querySelectorAll('label');
+      labels[0].textContent = `${labelPrefix} Name`;
+      labels[1].textContent = `${labelPrefix} Date`;
+      fragment.querySelector('.event-name').value = event.name || '';
+      fragment.querySelector('.event-date').value = event.date || '';
+      initializeDateInput(fragment.querySelector('.event-date'));
+      fragment.querySelector('.remove').addEventListener('click', () => row.remove());
+      sections[type].appendChild(fragment);
+    }
+
+    function collectEvents(type) {
+      return Array.from(sections[type].querySelectorAll('.event-row')).map((row) => ({
+        name: row.querySelector('.event-name').value.trim(),
+        date: row.querySelector('.event-date').value
+      })).filter((event) => event.name && event.date);
+    }
+
+    function getPayload() {
+      const mainRaces = collectEvents('main');
+      const secondaryRaces = collectEvents('secondary');
+      const trainingCamps = collectEvents('camp');
+      return {
+        riderFirst: document.getElementById('riderFirst').value.trim(),
+        riderLast: document.getElementById('riderLast').value.trim(),
+        coachFirst: document.getElementById('coachFirst').value.trim(),
+        coachLast: document.getElementById('coachLast').value.trim(),
+        year: Number(document.getElementById('year').value),
+        seasonStartDate: document.getElementById('seasonStartDate').value,
+        seasonEndDate: document.getElementById('seasonEndDate').value,
+        mainRaces,
+        secondaryRaces,
+        trainingCamps
+      };
+    }
+
+    function validatePayload(payload) {
+      return payload.riderFirst && payload.riderLast && payload.coachFirst && payload.coachLast &&
+        payload.year && payload.seasonStartDate && payload.seasonEndDate && payload.mainRaces.length > 0;
+    }
+
+    async function generateExcel() {
+      const payload = getPayload();
+      if (!validatePayload(payload)) {
+        setStatus('Please complete the required fields and add at least one main race.', 'error');
+        return;
+      }
+
+      excelButton.disabled = true;
+      setStatus('Generating Excel export…', 'info');
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('Excel export failed.');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const contentDisposition = response.headers.get('Content-Disposition') || '';
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+        const filename = filenameMatch ? filenameMatch[1] : `SeasonPlan_${payload.riderLast}_${payload.year}.xlsx`;
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(url);
+        setStatus('Excel export generated.', 'success');
+      } catch (error) {
+        setStatus(error.message || 'Excel export failed.', 'error');
+      } finally {
+        excelButton.disabled = false;
+      }
+    }
+
+    function openDashboard() {
+      const payload = getPayload();
+      if (!validatePayload(payload)) {
+        setStatus('Please complete the required fields and add at least one main race.', 'error');
+        return;
+      }
+
+      localStorage.setItem(dashboardStorageKey, JSON.stringify(payload));
+      const newTab = window.open('/dashboard', '_blank');
+      if (!newTab) {
+        window.location.href = '/dashboard';
+      }
+      setStatus('Dashboard opened in a new tab.', 'success');
+    }
+
+    function initializeDateInput(input) {
+      input.addEventListener('focus', () => {
+        if (typeof input.showPicker === 'function') {
+          input.showPicker();
+        }
+      });
+    }
+
+    document.getElementById('add-main-race').addEventListener('click', () => addEventRow('main'));
+    document.getElementById('add-secondary-race').addEventListener('click', () => addEventRow('secondary'));
+    document.getElementById('add-training-camp').addEventListener('click', () => addEventRow('camp'));
+    excelButton.addEventListener('click', generateExcel);
+    dashboardButton.addEventListener('click', openDashboard);
+    form.addEventListener('submit', (event) => event.preventDefault());
+    document.querySelectorAll('.date-input').forEach(initializeDateInput);
+    document.addEventListener('click', (event) => {
+      const input = event.target.closest('.date-input');
+      if (!input) {
+        return;
+      }
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      }
+    });
+
+    addEventRow('main');
+  </script>
+</body>
+</html>
