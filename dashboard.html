@@ -2076,12 +2076,30 @@
     function fitMacroBandLabels() {
       macroTimeline.querySelectorAll('.macro-band').forEach((band) => {
         const label = band.querySelector('strong');
+        const range = band.querySelector('span');
         if (!label) return;
+
+        // Reset
         label.style.fontSize = '';
+        if (range) range.style.display = '';
+
         let px = parseFloat(getComputedStyle(label).fontSize);
-        while (label.scrollWidth > label.offsetWidth && px > 6) {
+
+        // First pass: try to fit with the range visible
+        while (band.scrollWidth > band.offsetWidth && px > 6) {
           px -= 0.5;
           label.style.fontSize = px + 'px';
+        }
+
+        // If still overflowing or font got very small, hide the range and retry
+        if (range && (band.scrollWidth > band.offsetWidth || px <= 8)) {
+          range.style.display = 'none';
+          label.style.fontSize = '';
+          px = parseFloat(getComputedStyle(label).fontSize);
+          while (label.scrollWidth > label.offsetWidth && px > 6) {
+            px -= 0.5;
+            label.style.fontSize = px + 'px';
+          }
         }
       });
     }
