@@ -126,7 +126,14 @@ def normalize_event_list(items: list[dict], limit: int) -> list[dict]:
         raw_date = item.get("date")
         if not name or not raw_date:
             continue
-        normalized.append({"name": name, "date": parse_date(raw_date)})
+        entry: dict = {"name": name, "date": parse_date(raw_date)}
+        raw_end = item.get("endDate")
+        if raw_end:
+            try:
+                entry["endDate"] = parse_date(raw_end).isoformat()
+            except Exception:
+                pass
+        normalized.append(entry)
     return normalized
 
 
@@ -153,24 +160,45 @@ def assign_template_segment(plan: list[dict], start_week: int, template_items: l
         plan[week_number - 1]["intensity"] = template_item["intensity"]
 
 
-def build_phase_week_data(total_weeks: int, race_weeks: list[int]) -> list[dict]:
+def cluster_race_weeks(race_weeks: list[int], gap: int = 2) -> list[tuple[int, int]]:
+    """Group race weeks within `gap` weeks of each other; return (first, last) of each cluster."""
+    if not race_weeks:
+        return []
+    sorted_weeks = sorted(set(race_weeks))
+    clusters: list[list[int]] = []
+    cluster = [sorted_weeks[0]]
+    for week in sorted_weeks[1:]:
+        if week - cluster[-1] <= gap:
+            cluster.append(week)
+        else:
+            clusters.append(cluster)
+            cluster = [week]
+    clusters.append(cluster)
+    return [(min(c), max(c)) for c in clusters]
+
+
+def build_phase_week_data(total_weeks: int, race_spans: list[tuple[int, int]]) -> list[dict]:
     phase_week_data = [{"week": week, "phase": None, "micro": None, "volume": None, "intensity": None} for week in range(1, total_weeks + 1)]
     if total_weeks <= 0:
         return phase_week_data
 
-    sorted_race_weeks = sorted(set(week for week in race_weeks if 1 <= week <= total_weeks))
-    if not sorted_race_weeks:
+    sorted_spans = sorted(
+        [(f, l) for f, l in race_spans if 1 <= f <= total_weeks],
+        key=lambda x: x[0],
+    )
+    if not sorted_spans:
         assign_template_segment(phase_week_data, 1, sample_template(PRE_RACE_TEMPLATE, total_weeks))
         return phase_week_data
 
     cursor = 1
-    previous_race_week: int | None = None
+    previous_last_week: int | None = None
 
-    for race_week in sorted_race_weeks:
-        competition_start = max(cursor, race_week - 3)
+    for first_week, last_week in sorted_spans:
+        # Build the Peak/Taper/Race lead-in ending at first_week
+        competition_start = max(cursor, first_week - 3)
         if cursor <= competition_start - 1:
             open_length = competition_start - cursor
-            if previous_race_week is None:
+            if previous_last_week is None:
                 assign_template_segment(phase_week_data, cursor, sample_template(PRE_RACE_TEMPLATE, open_length))
             else:
                 phase_week_data[cursor - 1]["phase"] = "Recovery"
@@ -185,11 +213,18 @@ def build_phase_week_data(total_weeks: int, race_weeks: list[int]) -> list[dict]
                         sample_template(INTER_RACE_TEMPLATE, remaining_length),
                     )
 
-        competition_block = COMPETITION_TEMPLATE[-(race_week - competition_start + 1):]
+        competition_block = COMPETITION_TEMPLATE[-(first_week - competition_start + 1):]
         assign_template_segment(phase_week_data, competition_start, competition_block)
 
-        previous_race_week = race_week
-        cursor = race_week + 1
+        # Extend Race phase across all weeks of the span (first_week already set to Race above)
+        for span_week in range(first_week + 1, min(last_week, total_weeks) + 1):
+            phase_week_data[span_week - 1]["phase"] = "Race"
+            phase_week_data[span_week - 1]["micro"] = "RACE"
+            phase_week_data[span_week - 1]["volume"] = 1
+            phase_week_data[span_week - 1]["intensity"] = 5
+
+        previous_last_week = last_week
+        cursor = last_week + 1
 
     if cursor <= total_weeks:
         recovery_index = 1
@@ -336,7 +371,7 @@ def build_plan_context(data: dict) -> dict:
     season_end = parse_date(data["seasonEndDate"])
     main_race_name = str(data.get("mainRaceName", "")).strip()
     main_race_date = data.get("mainRaceDate")
-    main_races = normalize_event_list(data.get("mainRaces", []), 3)
+    main_races = normalize_event_list(data.get("mainRaces", []), 10)
     if not main_races and main_race_name and main_race_date:
         main_races = [{"name": main_race_name, "date": parse_date(main_race_date)}]
 
@@ -356,9 +391,9 @@ def build_plan_context(data: dict) -> dict:
         current_monday += timedelta(days=7)
 
     total_weeks = len(week_starts)
-    main_race_entries = [{"name": race["name"], "date": race["date"], "type": "main_race"} for race in main_races]
-    secondary_race_entries = [{"name": race["name"], "date": race["date"], "type": "secondary_race"} for race in secondary_races]
-    training_camp_entries = [{"name": camp["name"], "date": camp["date"], "type": "training_camp"} for camp in training_camps]
+    main_race_entries = [{**{"name": race["name"], "date": race["date"], "type": "main_race"}, **({"endDate": race["endDate"]} if race.get("endDate") else {})} for race in main_races]
+    secondary_race_entries = [{**{"name": race["name"], "date": race["date"], "type": "secondary_race"}, **({"endDate": race["endDate"]} if race.get("endDate") else {})} for race in secondary_races]
+    training_camp_entries = [{**{"name": camp["name"], "date": camp["date"], "type": "training_camp"}, **({"endDate": camp["endDate"]} if camp.get("endDate") else {})} for camp in training_camps]
     all_events = main_race_entries + secondary_race_entries + training_camp_entries
 
     event_cells: dict[int, dict] = {}
@@ -367,34 +402,51 @@ def build_plan_context(data: dict) -> dict:
         event_week = week_index_for_date(event["date"], week_starts)
         if event_week is None:
             continue
+        # Determine the last week this event spans into (via endDate)
+        end_week_idx = event_week
+        if event.get("endDate"):
+            try:
+                end_date_obj = parse_date(event["endDate"])
+                ew = week_index_for_date(end_date_obj, week_starts)
+                if ew is not None and ew > event_week:
+                    end_week_idx = ew
+            except Exception:
+                pass
+
         if event["type"] == "main_race":
-            race_weeks.append(event_week)
+            # All spanned weeks are race weeks so the schedule is built around the full span
+            for w in range(event_week, end_week_idx + 1):
+                race_weeks.append(w)
 
-        bucket = event_cells.setdefault(
-            event_week,
-            {
-                "events": [],
-                "names": [],
-                "has_main": False,
-                "has_secondary_race": False,
-                "has_training_camp": False,
-                "dates": [],
-            },
-        )
-        bucket["events"].append(
-            {
-                "name": event["name"],
-                "date": event["date"].isoformat(),
-                "type": event["type"],
-            }
-        )
-        bucket["names"].append(event["name"])
-        bucket["dates"].append(event["date"].isoformat())
-        bucket["has_main"] = bucket["has_main"] or event["type"] == "main_race"
-        bucket["has_secondary_race"] = bucket["has_secondary_race"] or event["type"] == "secondary_race"
-        bucket["has_training_camp"] = bucket["has_training_camp"] or event["type"] == "training_camp"
+        evt_entry: dict = {
+            "name": event["name"],
+            "date": event["date"].isoformat(),
+            "type": event["type"],
+        }
+        if event.get("endDate"):
+            evt_entry["endDate"] = event["endDate"]
 
-    plan_weeks = build_phase_week_data(total_weeks, race_weeks)
+        for week_num in range(event_week, end_week_idx + 1):
+            bucket = event_cells.setdefault(
+                week_num,
+                {
+                    "events": [],
+                    "names": [],
+                    "has_main": False,
+                    "has_secondary_race": False,
+                    "has_training_camp": False,
+                    "dates": [],
+                },
+            )
+            bucket["events"].append(evt_entry)
+            bucket["names"].append(event["name"])
+            bucket["dates"].append(event["date"].isoformat())
+            bucket["has_main"] = bucket["has_main"] or event["type"] == "main_race"
+            bucket["has_secondary_race"] = bucket["has_secondary_race"] or event["type"] == "secondary_race"
+            bucket["has_training_camp"] = bucket["has_training_camp"] or event["type"] == "training_camp"
+
+    race_spans = cluster_race_weeks(race_weeks)
+    plan_weeks = build_phase_week_data(total_weeks, race_spans)
     phase_blocks = phase_ranges(plan_weeks)
     macro_blocks = macro_ranges(plan_weeks)
     ftp_test_weeks = set()
@@ -426,6 +478,7 @@ def build_plan_context(data: dict) -> dict:
         week["hasMainRace"] = event_bucket["has_main"] if event_bucket else False
         week["hasSecondaryRace"] = event_bucket["has_secondary_race"] if event_bucket else False
         week["hasTrainingCamp"] = event_bucket["has_training_camp"] if event_bucket else False
+        week["mainRaceCount"] = sum(1 for e in week_events if e["type"] == "main_race")
         week["ftpTest"] = week["week"] in ftp_test_weeks
         week["fourDTest"] = week["week"] in four_d_test_weeks
 
@@ -494,8 +547,8 @@ def build_plan_context(data: dict) -> dict:
         "macroBlocks": [{"macro": macro, "startWeek": start, "endWeek": end} for macro, start, end in macro_blocks],
         "monthGroups": month_groups,
         "raceCells": event_cells,
-        "mainRaces": [{"name": race["name"], "date": race["date"].isoformat()} for race in main_races],
-        "secondaryRaces": [{"name": race["name"], "date": race["date"].isoformat()} for race in secondary_races],
-        "trainingCamps": [{"name": camp["name"], "date": camp["date"].isoformat()} for camp in training_camps],
+        "mainRaces": [{"name": r["name"], "date": r["date"].isoformat(), **({"endDate": r["endDate"]} if r.get("endDate") else {})} for r in main_races],
+        "secondaryRaces": [{"name": r["name"], "date": r["date"].isoformat(), **({"endDate": r["endDate"]} if r.get("endDate") else {})} for r in secondary_races],
+        "trainingCamps": [{"name": r["name"], "date": r["date"].isoformat(), **({"endDate": r["endDate"]} if r.get("endDate") else {})} for r in training_camps],
         "planWeeks": plan_weeks,
     }

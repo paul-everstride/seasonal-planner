@@ -214,13 +214,40 @@
 
     .event-row {
       display: grid;
-      grid-template-columns: 1.7fr 1fr auto;
+      grid-template-columns: 1.7fr 1fr 1fr auto auto;
       gap: 8px;
       align-items: end;
       padding: 12px;
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       border-radius: 6px;
+    }
+
+    .event-row .event-enddate-field {
+      display: none;
+    }
+
+    .event-row.has-range .event-enddate-field {
+      display: flex;
+    }
+
+    .event-row:not(.has-range) .event-enddate-field {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .btn.range-toggle {
+      padding: 7px 8px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      border-style: dashed;
+    }
+
+    .btn.range-toggle.active {
+      border-style: solid;
+      border-color: var(--accent-border);
+      color: var(--accent);
+      background: var(--accent-bg);
     }
 
     /* Buttons */
@@ -483,9 +510,14 @@
         <input class="event-name" type="text" required>
       </div>
       <div class="field">
-        <label>Event Date</label>
+        <label class="event-date-label">Start Date</label>
         <input class="event-date date-input" type="date" required>
       </div>
+      <div class="field event-enddate-field">
+        <label>End Date</label>
+        <input class="event-enddate date-input" type="date">
+      </div>
+      <button class="btn range-toggle" type="button" title="Toggle multi-day range">↔</button>
       <button class="btn remove" type="button">×</button>
     </div>
   </template>
@@ -498,7 +530,7 @@
     const statusMessage = document.getElementById('status-message');
     const dashboardStorageKey = 'season-plan-dashboard-payload';
     const limits = {
-      main: 3,
+      main: 10,
       secondary: 15,
       camp: 15
     };
@@ -536,16 +568,28 @@
       labels[1].textContent = `${labelPrefix} Date`;
       fragment.querySelector('.event-name').value = event.name || '';
       fragment.querySelector('.event-date').value = event.date || '';
+      fragment.querySelector('.event-enddate').value = event.endDate || '';
+      if (event.endDate) row.classList.add('has-range');
       initializeDateInput(fragment.querySelector('.event-date'));
+      initializeDateInput(fragment.querySelector('.event-enddate'));
+      const rangeToggle = fragment.querySelector('.range-toggle');
+      if (event.endDate) rangeToggle.classList.add('active');
+      rangeToggle.addEventListener('click', () => {
+        const isRange = row.classList.toggle('has-range');
+        rangeToggle.classList.toggle('active', isRange);
+        if (!isRange) fragment.querySelector('.event-enddate').value = '';
+      });
       fragment.querySelector('.remove').addEventListener('click', () => row.remove());
       sections[type].appendChild(fragment);
     }
 
     function collectEvents(type) {
-      return Array.from(sections[type].querySelectorAll('.event-row')).map((row) => ({
-        name: row.querySelector('.event-name').value.trim(),
-        date: row.querySelector('.event-date').value
-      })).filter((event) => event.name && event.date);
+      return Array.from(sections[type].querySelectorAll('.event-row')).map((row) => {
+        const endDate = row.querySelector('.event-enddate').value;
+        const entry = { name: row.querySelector('.event-name').value.trim(), date: row.querySelector('.event-date').value };
+        if (endDate) entry.endDate = endDate;
+        return entry;
+      }).filter((event) => event.name && event.date);
     }
 
     function getPayload() {
