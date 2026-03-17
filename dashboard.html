@@ -840,28 +840,39 @@
     .event-item {
       display: flex;
       align-items: center;
-      gap: 7px;
+      flex-wrap: wrap;
+      gap: 4px 7px;
       font-size: 0.78rem;
       padding: 5px 6px;
       border-radius: 5px;
       background: var(--bg-subtle);
       border: 1px solid var(--border);
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .event-item .flag {
+      flex-shrink: 0;
     }
 
     .event-item-name {
       font-weight: 500;
       color: var(--text);
       flex: 1;
-      min-width: 0;
+      min-width: 60px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .event-item-date {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
       font-family: var(--sans);
+      flex-shrink: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
@@ -983,6 +994,7 @@
       border-radius: 0 0 6px 6px;
       padding: 12px;
       min-width: 0;
+      overflow: hidden;
     }
 
     .detail-card.clickable {
@@ -1061,9 +1073,15 @@
 
     .dense-row {
       display: grid;
-      grid-template-columns: 90px 1fr;
+      grid-template-columns: 70px 1fr;
       gap: 6px;
       align-items: start;
+      min-width: 0;
+    }
+
+    .dense-row > *:last-child {
+      min-width: 0;
+      overflow: hidden;
     }
 
     .dense-row strong {
