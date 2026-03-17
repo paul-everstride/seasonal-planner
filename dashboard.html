@@ -984,6 +984,45 @@
       transition: box-shadow 0.2s ease;
     }
 
+    /* ── Selected-week highlight across all three views ── */
+    /* Rail row */
+    .rail-row.active td {
+      background: var(--accent-bg) !important;
+    }
+    .rail-row.active td:first-child {
+      box-shadow: inset 3px 0 0 var(--accent) !important;
+    }
+
+    /* Season strip cell */
+    .strip-cell.active {
+      background: var(--accent-bg) !important;
+      box-shadow: 0 0 0 2px var(--accent) !important;
+      border-top-color: var(--accent) !important;
+    }
+    .strip-cell.active .strip-line {
+      color: var(--accent);
+    }
+
+    /* Month card */
+    .detail-card.active {
+      background: var(--accent-bg);
+      box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
+      border-top-color: var(--accent);
+    }
+
+    /* Year matrix selected column */
+    .matrix th[data-selected],
+    .matrix td[data-selected] {
+      background: var(--accent-bg) !important;
+      outline: 1px solid var(--accent-border);
+      outline-offset: -1px;
+    }
+    .matrix thead th[data-selected] {
+      color: var(--accent);
+      font-weight: 700;
+      border-bottom: 2px solid var(--accent);
+    }
+
     .detail-head {
       display: flex;
       justify-content: space-between;
@@ -2086,54 +2125,55 @@
     }
 
     function buildCondensedMatrix(weeks) {
+      const sel = (w) => w.week === selectedWeek ? ' data-selected' : '';
       return `
         <table class="matrix">
           <thead>
             <tr>
               <th class="row-label sticky-corner">Row</th>
-              ${weeks.map((week) => `<th class="clickable" data-week="${week.week}">W${week.week}<br>${escapeHtml(week.weekRangeShort)}</th>`).join('')}
+              ${weeks.map((week) => `<th class="clickable"${sel(week)} data-week="${week.week}">W${week.week}<br>${escapeHtml(week.weekRangeShort)}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
             <tr>
               <th class="row-label">Macro</th>
-              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}">${escapeHtml(week.macro)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable"${sel(week)} data-week="${week.week}">${escapeHtml(week.macro)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Phase</th>
-              ${weeks.map((week) => `<td class="clickable phase-cell" data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.phase)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable phase-cell"${sel(week)} data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.phase)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Micro</th>
-              ${weeks.map((week) => `<td class="clickable micro-cell" data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.micro)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable micro-cell"${sel(week)} data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.micro)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Week Range</th>
-              ${weeks.map((week) => `<td class="clickable week-range-cell" data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.weekRangeShort)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable week-range-cell"${sel(week)} data-week="${week.week}" style="--phase-color:#${week.color};">${escapeHtml(week.weekRangeShort)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Volume</th>
-              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}"><div class="metric-inline">${metricBoxes(week.volume)}</div></td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable"${sel(week)} data-week="${week.week}"><div class="metric-inline">${metricBoxes(week.volume)}</div></td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Intensity</th>
-              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}"><div class="metric-inline">${metricBoxes(week.intensity, true)}</div></td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable"${sel(week)} data-week="${week.week}"><div class="metric-inline">${metricBoxes(week.intensity, true)}</div></td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Tests</th>
-              ${weeks.map((week) => `<td class="clickable" data-week="${week.week}">${testsMarkup(week)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable"${sel(week)} data-week="${week.week}">${testsMarkup(week)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Events</th>
-              ${weeks.map((week) => `<td class="clickable race-cell" data-week="${week.week}">${eventsSummaryMarkup(week)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable race-cell"${sel(week)} data-week="${week.week}">${eventsSummaryMarkup(week)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Focus</th>
-              ${weeks.map((week) => `<td class="clickable long-text" data-week="${week.week}">${escapeHtml(week.focusText)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable long-text"${sel(week)} data-week="${week.week}">${escapeHtml(week.focusText)}</td>`).join('')}
             </tr>
             <tr>
               <th class="row-label">Goal</th>
-              ${weeks.map((week) => `<td class="clickable long-text" data-week="${week.week}">${escapeHtml(week.goalText)}</td>`).join('')}
+              ${weeks.map((week) => `<td class="clickable long-text"${sel(week)} data-week="${week.week}">${escapeHtml(week.goalText)}</td>`).join('')}
             </tr>
           </tbody>
         </table>
@@ -2141,8 +2181,9 @@
     }
 
     function detailCardMarkup(week, clickable = false) {
+      const isSelected = week.week === selectedWeek;
       return `
-        <article class="detail-card ${clickable ? 'clickable' : ''}" data-week="${week.week}" style="--accent-color:#${week.color};">
+        <article class="detail-card ${clickable ? 'clickable' : ''} ${isSelected ? 'active' : ''}" data-week="${week.week}" style="--accent-color:#${week.color};">
           <div class="detail-head">
             <div>
               <div class="detail-meta">Week ${week.week}\n${escapeHtml(week.weekRangeShort)}</div>
