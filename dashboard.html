@@ -402,11 +402,17 @@
     }
 
     .rail-row.active td {
-      background: var(--accent-bg);
+      background: var(--accent) !important;
+      color: #fff !important;
+    }
+
+    .rail-row.active td .phase-dot {
+      box-shadow: 0 0 0 1.5px rgba(255,255,255,0.5);
     }
 
     .rail-row.active td:first-child {
-      box-shadow: inset 3px 0 0 var(--accent);
+      box-shadow: none;
+      font-weight: 700;
     }
 
     .rail-row.race-week td {
@@ -540,34 +546,54 @@
     }
 
     .strip-cell {
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 70px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 3px;
+      min-height: 72px;
       padding: 5px 5px 6px;
       cursor: pointer;
       display: grid;
       grid-template-rows: auto auto auto auto;
       gap: 2px;
-      border-top: 3px solid var(--accent-color, #C7C7C5);
-      border-radius: 0 0 4px 4px;
-      transition: background 0.12s, box-shadow 0.12s;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
 
-    .strip-cell:hover {
-      background: var(--bg-hover);
+    /* Tinted phase-color fill via pseudo-element for opacity control */
+    .strip-cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-color, #C7C7C5);
+      opacity: 0.18;
+      transition: opacity 0.12s;
+      pointer-events: none;
+    }
+
+    .strip-cell:hover::before {
+      opacity: 0.30;
     }
 
     .strip-cell.active {
-      box-shadow: 0 0 0 2px var(--accent);
-      background: var(--accent-bg);
+      transform: scaleY(1.06);
+      transform-origin: bottom;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+      z-index: 1;
+    }
+
+    .strip-cell.active::before {
+      opacity: 1;
     }
 
     .strip-line {
+      position: relative;
       font-family: var(--sans);
       font-size: 0.6rem;
       line-height: 1.1;
       color: var(--text-2);
+    }
+
+    .strip-cell.active .strip-line {
+      color: rgba(255,255,255,0.8);
     }
 
     .strip-line.strong {
@@ -576,7 +602,12 @@
       color: var(--text);
     }
 
+    .strip-cell.active .strip-line.strong {
+      color: #fff;
+    }
+
     .strip-flags {
+      position: relative;
       display: flex;
       flex-wrap: wrap;
       gap: 2px;
