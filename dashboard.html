@@ -535,11 +535,17 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: break-all;
+      overflow-wrap: break-word;
       min-width: 0;
       font-family: var(--sans);
+      line-height: 1.2;
+    }
+
+    /* Narrow single-week bands: shrink label text */
+    .macro-band.narrow strong {
+      font-size: 0.52rem;
+      letter-spacing: 0;
     }
 
     .macro-band span {
@@ -2056,10 +2062,13 @@
         button.type = 'button';
         button.className = 'macro-band';
         button.style.gridColumn = `${block.startWeek} / ${block.endWeek + 1}`;
-        const isSingleWeekTransition = block.macro === 'Transition' && block.startWeek === block.endWeek;
+        const spanWeeks = block.endWeek - block.startWeek + 1;
+        const isNarrow = spanWeeks <= 2;
+        const hideRange = block.macro === 'Transition' && spanWeeks === 1;
+        if (isNarrow) button.classList.add('narrow');
         button.innerHTML = `
           <strong>${escapeHtml(shortMacro(block.macro))}</strong>
-          ${isSingleWeekTransition ? '' : `<span>W${block.startWeek}-W${block.endWeek}</span>`}
+          ${hideRange ? '' : `<span>W${block.startWeek}-W${block.endWeek}</span>`}
         `;
         button.addEventListener('click', () => {
           selectedWeek = block.startWeek;
