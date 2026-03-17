@@ -2056,9 +2056,10 @@
         button.type = 'button';
         button.className = 'macro-band';
         button.style.gridColumn = `${block.startWeek} / ${block.endWeek + 1}`;
+        const isSingleWeekTransition = block.macro === 'Transition' && block.startWeek === block.endWeek;
         button.innerHTML = `
           <strong>${escapeHtml(shortMacro(block.macro))}</strong>
-          <span>W${block.startWeek}-W${block.endWeek}</span>
+          ${isSingleWeekTransition ? '' : `<span>W${block.startWeek}-W${block.endWeek}</span>`}
         `;
         button.addEventListener('click', () => {
           selectedWeek = block.startWeek;
