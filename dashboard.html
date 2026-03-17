@@ -35,8 +35,8 @@
       --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
       --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
       --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-      --mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      --sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --mono: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -182,7 +182,7 @@
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       margin-bottom: 4px;
     }
 
@@ -231,7 +231,7 @@
       margin: 0;
       font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--text-muted);
     }
@@ -321,7 +321,7 @@
       padding: 3px 8px;
       border-radius: 4px;
       font-size: 0.7rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
       font-weight: 600;
       text-transform: uppercase;
       white-space: nowrap;
@@ -341,7 +341,7 @@
       background: var(--bg-subtle);
       color: var(--text-2);
       font-size: 0.72rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
       line-height: 1.4;
       white-space: pre-line;
     }
@@ -359,7 +359,7 @@
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
-      font-family: var(--mono);
+      font-family: var(--sans);
       font-size: 0.68rem;
     }
 
@@ -442,6 +442,14 @@
       flex-direction: column;
     }
 
+    .overview-body {
+      display: block;
+    }
+
+    .overview-panel.collapsed .overview-body {
+      display: none;
+    }
+
     .overview-copy {
       padding: 7px 14px;
       border-bottom: 1px solid var(--border);
@@ -480,7 +488,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--mono);
+      font-family: var(--sans);
       font-size: 0.6rem;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -514,7 +522,7 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
       white-space: nowrap;
-      font-family: var(--mono);
+      font-family: var(--sans);
     }
 
     .macro-band span {
@@ -522,7 +530,7 @@
       font-size: 0.62rem;
       text-transform: uppercase;
       white-space: nowrap;
-      font-family: var(--mono);
+      font-family: var(--sans);
     }
 
     .strip-cell {
@@ -550,7 +558,7 @@
     }
 
     .strip-line {
-      font-family: var(--mono);
+      font-family: var(--sans);
       font-size: 0.6rem;
       line-height: 1.1;
       color: var(--text-2);
@@ -621,25 +629,28 @@
       flex-direction: column;
     }
 
+    .detail-body {
+      display: block;
+    }
+
+    .view-panel.collapsed .detail-body {
+      display: none;
+    }
+
     .view-scroll {
       overflow-x: auto;
     }
 
-    .controls {
-      display: grid;
-      gap: 8px;
-      padding: 10px 14px;
+    .controls-slim {
+      padding: 6px 14px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-subtle);
+      min-height: 0;
     }
 
-    .controls-top,
-    .controls-bottom {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
+    .controls-slim:empty,
+    .controls-slim .month-pills.hidden:only-child {
+      display: none;
     }
 
     .tabs,
@@ -684,7 +695,7 @@
       width: max-content;
       min-width: 100%;
       border-collapse: collapse;
-      font-family: var(--mono);
+      font-family: var(--sans);
       font-size: 0.7rem;
     }
 
@@ -800,7 +811,7 @@
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       margin-bottom: 2px;
     }
 
@@ -828,7 +839,7 @@
     .event-item-date {
       font-size: 0.7rem;
       color: var(--text-muted);
-      font-family: var(--mono);
+      font-family: var(--sans);
       white-space: nowrap;
     }
 
@@ -986,7 +997,7 @@
     .detail-date {
       color: var(--text-muted);
       font-size: 0.68rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
       line-height: 1.35;
       text-transform: uppercase;
       white-space: pre-line;
@@ -1000,7 +1011,7 @@
       display: inline-block;
       padding: 2px 7px;
       font-size: 0.65rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -1015,7 +1026,7 @@
       display: grid;
       gap: 4px;
       font-size: 0.72rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
     }
 
     .dense-row {
@@ -1044,7 +1055,7 @@
       margin-bottom: 3px;
       color: var(--text-muted);
       font-size: 0.65rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       font-weight: 700;
@@ -1345,7 +1356,7 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       font-size: 0.72rem;
-      font-family: var(--mono);
+      font-family: var(--sans);
       color: var(--text-2);
       line-height: 1.5;
     }
@@ -1461,7 +1472,6 @@
           <h2 class="panel-title">Week Rail</h2>
           <button class="btn-collapse" id="rail-toggle" title="Toggle rail" aria-label="Toggle week rail">‹</button>
         </div>
-        <div class="macro-row" id="macro-row"></div>
         <div class="rail-pinned" id="rail-pinned">Macro block: -</div>
         <div class="rail-table-wrap">
           <table class="rail-table">
@@ -1483,32 +1493,39 @@
       </aside>
 
       <main class="main">
-        <section class="panel overview-panel">
+        <section class="panel overview-panel" id="overview-panel">
           <div class="panel-head">
             <h2 class="panel-title">Season Overview</h2>
+            <button class="btn-collapse" id="overview-toggle" title="Collapse overview" aria-label="Toggle season overview">‹</button>
           </div>
-          <div class="overview-copy"></div>
-          <div class="timeline-wrap">
-            <div class="macro-timeline" id="macro-timeline"></div>
-            <div class="overview-dates" id="overview-dates"></div>
-            <div class="season-strip" id="season-strip"></div>
+          <div class="overview-body" id="overview-body">
+            <div class="overview-copy"></div>
+            <div class="timeline-wrap">
+              <div class="macro-timeline" id="macro-timeline"></div>
+              <div class="overview-dates" id="overview-dates"></div>
+              <div class="season-strip" id="season-strip"></div>
+            </div>
           </div>
         </section>
 
-        <section class="panel view-panel">
-          <div class="controls">
-            <div class="controls-top">
-              <div class="tabs">
+        <section class="panel view-panel" id="detail-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Detail View</h2>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div class="tabs" id="detail-tabs">
                 <button class="btn tab active" id="year-view-btn" type="button">Year</button>
                 <button class="btn tab" id="monthly-view-btn" type="button">Month</button>
               </div>
               <div class="week-nav" id="week-nav"></div>
-            </div>
-            <div class="controls-bottom">
-              <div class="month-pills hidden" id="month-pills"></div>
+              <button class="btn-collapse" id="detail-toggle" title="Collapse detail view" aria-label="Toggle detail view">‹</button>
             </div>
           </div>
-          <div class="view-scroll" id="view-content"></div>
+          <div class="detail-body" id="detail-body">
+            <div class="controls-slim" id="controls-slim">
+              <div class="month-pills hidden" id="month-pills"></div>
+            </div>
+            <div class="view-scroll" id="view-content"></div>
+          </div>
         </section>
       </main>
     </div>
@@ -1951,21 +1968,7 @@
     }
 
     function renderMacroRow() {
-      macroRow.innerHTML = '';
-      context.macroBlocks.forEach((block) => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'macro-chip';
-        chip.textContent = `${shortMacro(block.macro)} · W${block.startWeek}-${block.endWeek}`;
-        chip.addEventListener('click', () => {
-          selectedWeek = block.startWeek;
-          selectedMonthKey = weekByNumber(selectedWeek).monthKey;
-          syncButtons();
-          renderDashboard();
-          openWeekModal(block.startWeek);
-        });
-        macroRow.appendChild(chip);
-      });
+      // macro-row removed from DOM; nothing to render
     }
 
     function renderWeekRail() {
@@ -2013,7 +2016,7 @@
           currentView = 'year';
           syncButtons();
           renderDashboard();
-          openWeekModal(block.startWeek);
+          flashWeekInActiveView(block.startWeek);
         });
         macroTimeline.appendChild(button);
       });
@@ -2783,6 +2786,22 @@
       const collapsed = weekRail.classList.toggle('collapsed');
       railToggle.textContent = collapsed ? '›' : '‹';
       railToggle.title = collapsed ? 'Expand rail' : 'Collapse rail';
+    });
+
+    const overviewPanel = document.getElementById('overview-panel');
+    const overviewToggle = document.getElementById('overview-toggle');
+    overviewToggle.addEventListener('click', () => {
+      const collapsed = overviewPanel.classList.toggle('collapsed');
+      overviewToggle.textContent = collapsed ? '›' : '‹';
+      overviewToggle.title = collapsed ? 'Expand overview' : 'Collapse overview';
+    });
+
+    const detailPanel = document.getElementById('detail-panel');
+    const detailToggle = document.getElementById('detail-toggle');
+    detailToggle.addEventListener('click', () => {
+      const collapsed = detailPanel.classList.toggle('collapsed');
+      detailToggle.textContent = collapsed ? '›' : '‹';
+      detailToggle.title = collapsed ? 'Expand detail view' : 'Collapse detail view';
     });
 
     loadContext();
