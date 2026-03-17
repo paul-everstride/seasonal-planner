@@ -535,17 +535,9 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      word-break: break-all;
-      overflow-wrap: break-word;
+      white-space: nowrap;
       min-width: 0;
       font-family: var(--sans);
-      line-height: 1.2;
-    }
-
-    /* Narrow single-week bands: shrink label text */
-    .macro-band.narrow strong {
-      font-size: 0.52rem;
-      letter-spacing: 0;
     }
 
     .macro-band span {
@@ -2063,9 +2055,7 @@
         button.className = 'macro-band';
         button.style.gridColumn = `${block.startWeek} / ${block.endWeek + 1}`;
         const spanWeeks = block.endWeek - block.startWeek + 1;
-        const isNarrow = spanWeeks <= 2;
         const hideRange = block.macro === 'Transition' && spanWeeks === 1;
-        if (isNarrow) button.classList.add('narrow');
         button.innerHTML = `
           <strong>${escapeHtml(shortMacro(block.macro))}</strong>
           ${hideRange ? '' : `<span>W${block.startWeek}-W${block.endWeek}</span>`}
@@ -2079,6 +2069,20 @@
           flashWeekInActiveView(block.startWeek);
         });
         macroTimeline.appendChild(button);
+      });
+      requestAnimationFrame(fitMacroBandLabels);
+    }
+
+    function fitMacroBandLabels() {
+      macroTimeline.querySelectorAll('.macro-band').forEach((band) => {
+        const label = band.querySelector('strong');
+        if (!label) return;
+        label.style.fontSize = '';
+        let px = parseFloat(getComputedStyle(label).fontSize);
+        while (label.scrollWidth > label.offsetWidth && px > 6) {
+          px -= 0.5;
+          label.style.fontSize = px + 'px';
+        }
       });
     }
 
