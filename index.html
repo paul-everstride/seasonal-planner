@@ -418,19 +418,27 @@
             </div>
             <div class="section-body">
               <div class="grid">
-                <div class="field">
+                <!-- Athlete dropdown (shown when coach_id present) -->
+                <div class="field full" id="athlete-select-field" style="display:none;">
+                  <label for="athleteSelect">Select Athlete</label>
+                  <select id="athleteSelect" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:14px;">
+                    <option value="">Loading athletes…</option>
+                  </select>
+                </div>
+                <!-- Manual name fields (shown when no coach_id) -->
+                <div class="field" id="riderFirstField">
                   <label for="riderFirst">Rider First Name</label>
                   <input id="riderFirst" type="text" placeholder="First name" required>
                 </div>
-                <div class="field">
+                <div class="field" id="riderLastField">
                   <label for="riderLast">Rider Last Name</label>
                   <input id="riderLast" type="text" placeholder="Last name" required>
                 </div>
-                <div class="field">
+                <div class="field" id="coachFirstField">
                   <label for="coachFirst">Coach First Name</label>
                   <input id="coachFirst" type="text" placeholder="First name" required>
                 </div>
-                <div class="field">
+                <div class="field" id="coachLastField">
                   <label for="coachLast">Coach Last Name</label>
                   <input id="coachLast" type="text" placeholder="Last name" required>
                 </div>
@@ -439,6 +447,9 @@
                   <input id="year" type="number" min="2000" max="2100" required>
                 </div>
               </div>
+              <!-- Hidden fields for Everstride integration -->
+              <input type="hidden" id="coachId" value="">
+              <input type="hidden" id="athleteOwId" value="">
             </div>
           </div>
 
@@ -658,6 +669,11 @@
 
     function openDashboard() {
       const payload = getPayload();
+      // Attach Everstride integration data if present
+      const cid = document.getElementById('coachId').value;
+      const aid = document.getElementById('athleteOwId').value;
+      if (cid) payload._coachId = cid;
+      if (aid) payload._athleteOwId = aid;
       if (!validatePayload(payload)) {
         setStatus('Please complete the required fields and add at least one main race.', 'error');
         return;
@@ -697,6 +713,71 @@
     });
 
     addEventRow('main');
+
+    // ── Everstride integration: athlete dropdown ─────────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const coachId = urlParams.get('coach_id');
+    const coachName = urlParams.get('coach_name') || '';
+
+    if (coachId) {
+      document.getElementById('coachId').value = coachId;
+
+      // Hide manual name fields, show athlete dropdown
+      document.getElementById('riderFirstField').style.display = 'none';
+      document.getElementById('riderLastField').style.display = 'none';
+      document.getElementById('coachFirstField').style.display = 'none';
+      document.getElementById('coachLastField').style.display = 'none';
+      document.getElementById('athlete-select-field').style.display = 'block';
+
+      // Pre-fill coach name if provided
+      if (coachName) {
+        const parts = coachName.split(' ');
+        document.getElementById('coachFirst').value = parts[0] || '';
+        document.getElementById('coachLast').value = parts.slice(1).join(' ') || '';
+      }
+
+      // Fetch athletes from API
+      fetch(`/api/athletes?coach_id=${encodeURIComponent(coachId)}`)
+        .then(r => r.json())
+        .then(athletes => {
+          const select = document.getElementById('athleteSelect');
+          select.innerHTML = '<option value="">Select an athlete…</option>';
+          athletes.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = JSON.stringify(a);
+            opt.textContent = a.name + (a.email ? ` (${a.email})` : '');
+            select.appendChild(opt);
+          });
+
+          // Pre-select if athlete_id is in URL
+          const preselect = urlParams.get('athlete_id');
+          if (preselect) {
+            for (const opt of select.options) {
+              if (opt.value) {
+                try {
+                  const d = JSON.parse(opt.value);
+                  if (d.id === preselect) { select.value = opt.value; select.dispatchEvent(new Event('change')); break; }
+                } catch {}
+              }
+            }
+          }
+        })
+        .catch(() => {
+          document.getElementById('athleteSelect').innerHTML = '<option value="">Failed to load athletes</option>';
+        });
+
+      // When athlete is selected, fill rider name fields
+      document.getElementById('athleteSelect').addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        try {
+          const a = JSON.parse(e.target.value);
+          const parts = a.name.split(' ');
+          document.getElementById('riderFirst').value = parts[0] || '';
+          document.getElementById('riderLast').value = parts.slice(1).join(' ') || '';
+          document.getElementById('athleteOwId').value = a.id || '';
+        } catch {}
+      });
+    }
   </script>
 </body>
 </html>

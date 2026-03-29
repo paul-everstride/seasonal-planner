@@ -1478,6 +1478,7 @@
         <button class="btn" id="redo-btn" type="button" disabled title="Redo">↪ Redo</button>
         <button class="btn" id="back-btn" type="button">← Back to Form</button>
         <button class="btn primary" id="export-btn" type="button">Export to Excel</button>
+        <button class="btn primary" id="save-everstride-btn" type="button" style="display:none;background:#e16b2b;border-color:#e16b2b;">Save to Everstride</button>
       </div>
     </div>
 
@@ -2886,7 +2887,64 @@
       detailToggle.title = collapsed ? 'Expand detail view' : 'Collapse detail view';
     });
 
-    loadContext();
+    // ── Save to Everstride ─────────────────────────────────────
+    const saveEverstrideBtn = document.getElementById('save-everstride-btn');
+
+    // Show button only if we have coach_id and athlete info from the form
+    function checkSaveButtonVisibility() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p._coachId && p._athleteOwId) {
+        saveEverstrideBtn.style.display = '';
+      }
+    }
+
+    saveEverstrideBtn.addEventListener('click', async () => {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw || !context) return;
+      const p = JSON.parse(raw);
+      const coachId = p._coachId;
+      const athleteOwId = p._athleteOwId;
+
+      if (!coachId || !athleteOwId) {
+        alert('Missing coach or athlete info. Please go back to the form and select an athlete.');
+        return;
+      }
+
+      saveEverstrideBtn.disabled = true;
+      saveEverstrideBtn.textContent = 'Saving…';
+
+      try {
+        const resp = await fetch('/api/save-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            coach_id: coachId,
+            athlete_ow_id: athleteOwId,
+            athlete_name: `${p.riderFirst} ${p.riderLast}`.trim(),
+            season_year: p.year,
+            season_start: p.seasonStartDate,
+            season_end: p.seasonEndDate,
+            plan_data: context.planWeeks,
+            form_payload: p,
+          }),
+        });
+        const result = await resp.json();
+        if (result.success) {
+          saveEverstrideBtn.textContent = '✓ Saved';
+          setTimeout(() => { saveEverstrideBtn.textContent = 'Save to Everstride'; saveEverstrideBtn.disabled = false; }, 2000);
+        } else {
+          throw new Error(result.error || 'Save failed');
+        }
+      } catch (err) {
+        alert('Failed to save: ' + err.message);
+        saveEverstrideBtn.textContent = 'Save to Everstride';
+        saveEverstrideBtn.disabled = false;
+      }
+    });
+
+    loadContext().then(() => checkSaveButtonVisibility());
   </script>
 </body>
 </html>
