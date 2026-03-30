@@ -397,7 +397,22 @@
   </style>
 </head>
 <body>
-  <div class="page">
+  <!-- Loading overlay: shown immediately when checking for an existing plan -->
+  <div id="loading-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg-subtle);flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+    <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;"></div>
+    <p style="font-size:14px;color:var(--text-2);margin:0;">Loading season plan…</p>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
+  <script>
+    // If coach_id + athlete_id are both in the URL, hide the form immediately and show a loading state
+    (function() {
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('coach_id') && p.get('athlete_id')) {
+        document.getElementById('loading-overlay').style.display = 'flex';
+      }
+    })();
+  </script>
+  <div class="page" id="main-page">
     <div class="header">
       <h1>Season Planner</h1>
       <div class="header-steps">
@@ -721,12 +736,14 @@
         const plan = await resp.json();
         if (plan && plan.form_payload) {
           // Plan exists — send the coach straight to the dashboard
-          window.location.href = `/dashboard?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`;
+          window.location.replace(`/dashboard?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`);
           return;
         }
       } catch (err) {
         console.warn('Could not check for existing plan:', err);
       }
+      // No saved plan — hide loading overlay and show the form
+      document.getElementById('loading-overlay').style.display = 'none';
     }
 
     // ── Everstride integration: athlete dropdown ─────────────────────────────

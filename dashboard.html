@@ -1474,6 +1474,7 @@
         <p id="subtitle">Loading race-driven dashboard…</p>
       </div>
       <div class="toolbar">
+        <a id="back-everstride-btn" href="#" style="display:none;text-decoration:none;" class="btn">← Back to Everstride</a>
         <button class="btn" id="undo-btn" type="button" disabled title="Undo last edit">↩ Undo</button>
         <button class="btn" id="redo-btn" type="button" disabled title="Redo">↪ Redo</button>
         <button class="btn" id="back-btn" type="button">← Back to Form</button>
@@ -2971,6 +2972,19 @@
         saveEverstrideBtn.disabled = false;
       }
     });
+
+    // ── Show "Back to Everstride" button if opened from Everstride ──
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const coachId = params.get('coach_id');
+      const athleteId = params.get('athlete_id');
+      if (coachId && athleteId) {
+        const btn = document.getElementById('back-everstride-btn');
+        const everstideUrl = 'https://app.everstride.fit/athletes/' + encodeURIComponent(athleteId);
+        btn.href = everstideUrl;
+        btn.style.display = '';
+      }
+    })();
 
     loadContext().then(() => checkSaveButtonVisibility());
   </script>
