@@ -2378,15 +2378,43 @@
     }
 
     async function loadContext() {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) {
-        subtitle.textContent = 'No form data found. Go back to the form and open the dashboard from there.';
-        viewContent.innerHTML = '<div class="empty">No payload found in local storage.</div>';
-        return;
+      // ── Try loading a saved plan from Supabase if URL has coach_id + athlete_id ──
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlCoachId = urlParams.get('coach_id');
+      const urlAthleteId = urlParams.get('athlete_id');
+
+      if (urlCoachId && urlAthleteId) {
+        try {
+          const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(urlCoachId)}&athlete_id=${encodeURIComponent(urlAthleteId)}`);
+          const plan = await resp.json();
+          if (plan && plan.form_payload) {
+            // Rebuild payload from saved plan so the dashboard can work with it
+            payload = {
+              ...plan.form_payload,
+              _coachId: urlCoachId,
+              _athleteOwId: urlAthleteId,
+            };
+            weekOverrides = payload.weekOverrides || {};
+            // Persist to localStorage so edits and "Save to Everstride" work
+            localStorage.setItem(storageKey, JSON.stringify(payload));
+          }
+        } catch (err) {
+          console.warn('Could not load saved plan from Supabase:', err);
+        }
       }
 
-      payload = JSON.parse(raw);
-      weekOverrides = payload.weekOverrides || {};
+      // ── Fall back to localStorage (normal flow from the form) ──
+      if (!payload) {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) {
+          subtitle.textContent = 'No form data found. Go back to the form and open the dashboard from there.';
+          viewContent.innerHTML = '<div class="empty">No payload found in local storage.</div>';
+          return;
+        }
+        payload = JSON.parse(raw);
+        weekOverrides = payload.weekOverrides || {};
+      }
+
       try {
         await fetchContext();
         const selected = weekByNumber(selectedWeek);
