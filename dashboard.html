@@ -2980,14 +2980,21 @@
       }
     });
 
-    // ── Show "Back to Everstride" button if opened from Everstride ──
+    // ── Show "Back to Everstride" button if coach/athlete info is available ──
     (function() {
       const params = new URLSearchParams(window.location.search);
       const coachId = params.get('coach_id');
       const athleteId = params.get('athlete_id');
-      if (coachId && athleteId) {
+      // Also check localStorage payload (when opened via "Open Dashboard" from the form)
+      let lsAthleteId = null;
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) { const p = JSON.parse(raw); lsAthleteId = p._athleteOwId || null; }
+      } catch {}
+      const resolvedAthleteId = athleteId || lsAthleteId;
+      if (resolvedAthleteId) {
         const btn = document.getElementById('back-everstride-btn');
-        const everstideUrl = 'https://app.everstride.fit/athletes/' + encodeURIComponent(athleteId);
+        const everstideUrl = 'https://app.everstride.fit/athletes/' + encodeURIComponent(resolvedAthleteId);
         btn.href = everstideUrl;
         btn.style.display = '';
       }
