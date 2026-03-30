@@ -751,7 +751,12 @@
         const plan = await resp.json();
         if (plan && plan.form_payload) {
           if (isNewPlan) {
-            // User clicked "Back to Form" — show the form with a warning
+            // User clicked "Back to Form" — pre-fill from saved plan and show warning
+            const fp = plan.form_payload;
+            if (fp.coachFirst) document.getElementById('coachFirst').value = fp.coachFirst;
+            if (fp.coachLast) document.getElementById('coachLast').value = fp.coachLast;
+            if (fp.riderFirst) document.getElementById('riderFirst').value = fp.riderFirst;
+            if (fp.riderLast) document.getElementById('riderLast').value = fp.riderLast;
             document.getElementById('loading-overlay').style.display = 'none';
             showPlanWarning(true);
             return;
