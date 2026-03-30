@@ -714,6 +714,40 @@
 
     addEventRow('main');
 
+    // ── Load existing plan from Supabase and fill the form ───────────────────
+    async function loadExistingPlan(coachId, athleteId) {
+      try {
+        const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`);
+        const plan = await resp.json();
+        if (!plan || !plan.form_payload) return;
+
+        const fp = plan.form_payload;
+
+        // Fill season fields
+        if (fp.year) document.getElementById('year').value = fp.year;
+        if (fp.seasonStartDate) document.getElementById('seasonStartDate').value = fp.seasonStartDate;
+        if (fp.seasonEndDate) document.getElementById('seasonEndDate').value = fp.seasonEndDate;
+
+        // Clear existing event rows and re-populate from saved plan
+        sections.main.innerHTML = '';
+        sections.secondary.innerHTML = '';
+        sections.camp.innerHTML = '';
+
+        if (fp.mainRaces && fp.mainRaces.length > 0) {
+          fp.mainRaces.forEach(r => addEventRow('main', r));
+        } else {
+          addEventRow('main');
+        }
+        if (fp.secondaryRaces) fp.secondaryRaces.forEach(r => addEventRow('secondary', r));
+        if (fp.trainingCamps) fp.trainingCamps.forEach(r => addEventRow('camp', r));
+
+        setStatus('Loaded existing season plan — edit and open the Dashboard to update.', 'success');
+      } catch (err) {
+        // Silently fail — coach can still create a new plan
+        console.warn('Could not load existing plan:', err);
+      }
+    }
+
     // ── Everstride integration: athlete dropdown ─────────────────────────────
     const urlParams = new URLSearchParams(window.location.search);
     const coachId = urlParams.get('coach_id');
@@ -760,6 +794,9 @@
                 } catch {}
               }
             }
+
+            // ── Load existing plan if one was saved ──────────────────
+            loadExistingPlan(coachId, preselect);
           }
         })
         .catch(() => {
