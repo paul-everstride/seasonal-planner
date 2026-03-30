@@ -2465,7 +2465,14 @@
     }
 
     document.getElementById('back-btn').addEventListener('click', () => {
-      window.location.href = '/';
+      const params = new URLSearchParams(window.location.search);
+      const coachId = params.get('coach_id') || (payload && payload._coachId);
+      const athleteId = params.get('athlete_id') || (payload && payload._athleteOwId);
+      if (coachId && athleteId) {
+        window.location.href = `/?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}&new_plan=1`;
+      } else {
+        window.location.href = '/';
+      }
     });
     yearViewBtn.addEventListener('click', () => {
       currentView = 'year';

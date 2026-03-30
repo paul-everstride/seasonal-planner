@@ -729,12 +729,33 @@
 
     addEventRow('main');
 
+    // ── Warning banner for existing plans ──────────────────────────────────────
+    function showPlanWarning(show) {
+      let banner = document.getElementById('plan-warning');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'plan-warning';
+        banner.style.cssText = 'background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;';
+        banner.innerHTML = '<strong style="color:#92400E;font-size:13px;">⚠ This athlete already has a season plan.</strong><br><span style="color:#92400E;font-size:12px;">Creating a new plan will replace the existing one.</span>';
+        const formEl = document.getElementById('season-plan-form');
+        formEl.parentElement.insertBefore(banner, formEl);
+      }
+      banner.style.display = show ? 'block' : 'none';
+    }
+
     // ── If a saved plan exists, skip the form and go straight to the dashboard ─
     async function redirectIfPlanExists(coachId, athleteId) {
+      const isNewPlan = new URLSearchParams(window.location.search).get('new_plan') === '1';
       try {
         const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`);
         const plan = await resp.json();
         if (plan && plan.form_payload) {
+          if (isNewPlan) {
+            // User clicked "Back to Form" — show the form with a warning
+            document.getElementById('loading-overlay').style.display = 'none';
+            showPlanWarning(true);
+            return;
+          }
           // Plan exists — send the coach straight to the dashboard
           window.location.replace(`/dashboard?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`);
           return;
@@ -801,15 +822,23 @@
           document.getElementById('athleteSelect').innerHTML = '<option value="">Failed to load athletes</option>';
         });
 
-      // When athlete is selected, fill rider name fields
-      document.getElementById('athleteSelect').addEventListener('change', (e) => {
-        if (!e.target.value) return;
+      // When athlete is selected, fill rider name fields and check for existing plan
+      document.getElementById('athleteSelect').addEventListener('change', async (e) => {
+        if (!e.target.value) { showPlanWarning(false); return; }
         try {
           const a = JSON.parse(e.target.value);
           const parts = a.name.split(' ');
           document.getElementById('riderFirst').value = parts[0] || '';
           document.getElementById('riderLast').value = parts.slice(1).join(' ') || '';
           document.getElementById('athleteOwId').value = a.id || '';
+          // Check if this athlete already has a season plan
+          if (coachId && a.id) {
+            try {
+              const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(a.id)}`);
+              const plan = await resp.json();
+              showPlanWarning(plan && plan.form_payload);
+            } catch { showPlanWarning(false); }
+          }
         } catch {}
       });
     }
