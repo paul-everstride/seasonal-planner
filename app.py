@@ -18,6 +18,9 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 IS_DEMO = not SUPABASE_URL or not SUPABASE_KEY  # Auto-detect demo mode
 
+# ── In-memory plan storage (demo only, resets on restart) ──────────────────
+SAVED_PLANS: dict[str, dict] = {}  # key = "coach_id::athlete_id::year"
+
 
 def get_supabase():
     if IS_DEMO:
@@ -114,8 +117,20 @@ def save_plan():
         if field not in data:
             return jsonify({"error": f"Missing field: {field}"}), 400
 
-    # ── Demo mode: accept but don't persist ──
+    # ── Demo mode: store in memory ──
     if IS_DEMO:
+        key = f"{data['coach_id']}::{data['athlete_ow_id']}::{data['season_year']}"
+        SAVED_PLANS[key] = {
+            "id": f"demo-plan-{data['athlete_ow_id']}",
+            "coach_id": data["coach_id"],
+            "athlete_ow_id": data["athlete_ow_id"],
+            "athlete_name": data["athlete_name"],
+            "season_year": data["season_year"],
+            "season_start": data["season_start"],
+            "season_end": data["season_end"],
+            "plan_data": data["plan_data"],
+            "form_payload": data["form_payload"],
+        }
         return jsonify({"success": True, "id": f"demo-plan-{data['athlete_ow_id']}", "demo": True})
 
     sb = get_supabase()
@@ -155,12 +170,24 @@ def load_plan():
     if not coach_id or not athlete_id:
         return jsonify({"error": "Missing coach_id or athlete_id"}), 400
 
-    # ── Demo mode: build plan from demo data ──
+    # ── Demo mode: check saved plans first, then fall back to generated ──
     if IS_DEMO:
+        # Check if a plan was saved in this session
+        yr = int(year) if year else None
+        if yr:
+            key = f"{coach_id}::{athlete_id}::{yr}"
+            if key in SAVED_PLANS:
+                return jsonify(SAVED_PLANS[key])
+        else:
+            # Find most recent saved plan for this athlete
+            for k, v in sorted(SAVED_PLANS.items(), reverse=True):
+                if k.startswith(f"{coach_id}::{athlete_id}::"):
+                    return jsonify(v)
+
+        # Fall back to demo-generated plan
         payload = get_demo_athlete_payload(athlete_id)
         if not payload:
             return jsonify(None)
-        # Generate the full plan context using the planner engine
         context = build_plan_context(payload)
         athlete = get_demo_athlete(athlete_id)
         return jsonify({
