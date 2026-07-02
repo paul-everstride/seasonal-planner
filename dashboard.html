@@ -2383,10 +2383,12 @@
       const urlParams = new URLSearchParams(window.location.search);
       const urlCoachId = urlParams.get('coach_id');
       const urlAthleteId = urlParams.get('athlete_id');
+      const urlToken = urlParams.get('token') || '';
+      const tokenQS = urlToken ? `&token=${encodeURIComponent(urlToken)}` : '';
 
       if (urlCoachId && urlAthleteId) {
         try {
-          const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(urlCoachId)}&athlete_id=${encodeURIComponent(urlAthleteId)}`);
+          const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(urlCoachId)}&athlete_id=${encodeURIComponent(urlAthleteId)}${tokenQS}`);
           const plan = await resp.json();
           if (plan && plan.form_payload) {
             // Rebuild payload from saved plan so the dashboard can work with it
@@ -2394,6 +2396,7 @@
               ...plan.form_payload,
               _coachId: urlCoachId,
               _athleteOwId: urlAthleteId,
+              _token: urlToken || undefined,
             };
             weekOverrides = payload.weekOverrides || {};
             // Persist to localStorage so edits and "Save to Everstride" work
@@ -2468,8 +2471,9 @@
       const params = new URLSearchParams(window.location.search);
       const coachId = params.get('coach_id') || (payload && payload._coachId);
       const athleteId = params.get('athlete_id') || (payload && payload._athleteOwId);
+      const token = params.get('token') || (payload && payload._token) || '';
       if (coachId && athleteId) {
-        window.location.href = `/?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}&new_plan=1`;
+        window.location.href = `/?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}&new_plan=1${token ? `&token=${encodeURIComponent(token)}` : ''}`;
       } else {
         window.location.href = '/';
       }
@@ -2942,6 +2946,7 @@
       const p = JSON.parse(raw);
       const coachId = p._coachId;
       const athleteOwId = p._athleteOwId;
+      const token = p._token || new URLSearchParams(window.location.search).get('token') || '';
 
       if (!coachId || !athleteOwId) {
         alert('Missing coach or athlete info. Please go back to the form and select an athlete.');
@@ -2951,11 +2956,16 @@
       saveEverstrideBtn.disabled = true;
       saveEverstrideBtn.textContent = 'Saving…';
 
+      // Don't persist the short-lived access token into the stored plan.
+      const formPayload = { ...p };
+      delete formPayload._token;
+
       try {
         const resp = await fetch('/api/save-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            token: token,
             coach_id: coachId,
             athlete_ow_id: athleteOwId,
             athlete_name: `${p.riderFirst} ${p.riderLast}`.trim(),
@@ -2963,7 +2973,7 @@
             season_start: p.seasonStartDate,
             season_end: p.seasonEndDate,
             plan_data: context.planWeeks,
-            form_payload: p,
+            form_payload: formPayload,
           }),
         });
         const result = await resp.json();

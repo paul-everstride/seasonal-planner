@@ -689,6 +689,8 @@
       const aid = document.getElementById('athleteOwId').value;
       if (cid) payload._coachId = cid;
       if (aid) payload._athleteOwId = aid;
+      const tok = evToken();
+      if (tok) payload._token = tok;
       if (!validatePayload(payload)) {
         setStatus('Please complete the required fields and add at least one main race.', 'error');
         return;
@@ -743,11 +745,15 @@
       banner.style.display = show ? 'block' : 'none';
     }
 
+    // Everstride access token (from the launch URL) — forwarded to every API call.
+    function evToken() { return new URLSearchParams(window.location.search).get('token') || ''; }
+    function evTokenQS() { const t = evToken(); return t ? `&token=${encodeURIComponent(t)}` : ''; }
+
     // ── If a saved plan exists, skip the form and go straight to the dashboard ─
     async function redirectIfPlanExists(coachId, athleteId) {
       const isNewPlan = new URLSearchParams(window.location.search).get('new_plan') === '1';
       try {
-        const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`);
+        const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}${evTokenQS()}`);
         const plan = await resp.json();
         if (plan && plan.form_payload) {
           if (isNewPlan) {
@@ -762,7 +768,7 @@
             return;
           }
           // Plan exists — send the coach straight to the dashboard
-          window.location.replace(`/dashboard?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}`);
+          window.location.replace(`/dashboard?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(athleteId)}${evTokenQS()}`);
           return;
         }
       } catch (err) {
@@ -795,7 +801,7 @@
       }
 
       // Fetch athletes from API
-      fetch(`/api/athletes?coach_id=${encodeURIComponent(coachId)}`)
+      fetch(`/api/athletes?coach_id=${encodeURIComponent(coachId)}${evTokenQS()}`)
         .then(r => r.json())
         .then(athletes => {
           const select = document.getElementById('athleteSelect');
@@ -839,7 +845,7 @@
           // Check if this athlete already has a season plan
           if (coachId && a.id) {
             try {
-              const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(a.id)}`);
+              const resp = await fetch(`/api/load-plan?coach_id=${encodeURIComponent(coachId)}&athlete_id=${encodeURIComponent(a.id)}${evTokenQS()}`);
               const plan = await resp.json();
               showPlanWarning(plan && plan.form_payload);
             } catch { showPlanWarning(false); }
