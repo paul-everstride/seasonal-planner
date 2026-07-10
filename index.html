@@ -637,7 +637,9 @@
     }
 
     function validatePayload(payload) {
-      return payload.riderFirst && payload.riderLast && payload.coachFirst && payload.coachLast &&
+      const hasCoachId = !!document.getElementById('coachId').value;
+      const coachOk = hasCoachId || (payload.coachFirst && payload.coachLast);
+      return payload.riderFirst && payload.riderLast && coachOk &&
         payload.year && payload.seasonStartDate && payload.seasonEndDate && payload.mainRaces.length > 0;
     }
 
